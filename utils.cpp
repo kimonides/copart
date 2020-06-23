@@ -175,6 +175,7 @@ void sigINT_handler(int signum)
     if (PCM::getInstance()->isBlocked()) {
         return;
     } else {
+        return;
         exit_cleanup();
         _exit(EXIT_SUCCESS);
     }
