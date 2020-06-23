@@ -1380,7 +1380,7 @@ int main(int argc, char * argv[])
             //cout << cstates1.size();
             
             if (m->isL3CacheHitRatioAvailable())
-                cout << "    " << unit_format(getL3CacheHitRatio(state1, state2));
+                cout << "    " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0]));
             // cout << float_format(getL3CacheMisses(cstates1[0], cstates2[0])) << "  ";
             // cout << unit_format(getL3CacheMisses(cstates1[0], cstates2[0])) << endl << endl;
             
