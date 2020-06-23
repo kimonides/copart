@@ -18,6 +18,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 /*!     \file pcm.cpp
 \brief Example of using CPU counters: implements a simple performance counter monitoring utility
 */
+#include "copart.h"
+
+
 #define HACK_TO_REMOVE_DUPLICATE_ERROR
 #include <iostream>
 #ifdef _MSC_VER
@@ -1042,6 +1045,17 @@ void print_csv(PCM * m,
     }
 }
 
+
+void initiate_copart_apps()
+{
+    system("docker run --name dc-server --net caching_network --cpus=1 --cpuset-cpus=0 -d cloudsuite/data-caching:server -t 1 -m 4096 -n 550");
+    struct app *app = new app;
+    app->cpu_core = 0;
+    appList.insert(app);
+    cout << "Current app count: " << appList.size() << endl;
+}
+
+
 int main(int argc, char * argv[])
 {
     set_signal_handlers();
@@ -1181,6 +1195,7 @@ int main(int argc, char * argv[])
         if (strncmp(*argv, "--copart", 8) == 0 ||
             strncmp(*argv, "/copart", 7) == 0)
         {
+            initiate_copart_apps();
             cerr << "Copart activated" << endl;
             copart_output = true;
             continue;
