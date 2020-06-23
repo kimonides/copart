@@ -1378,6 +1378,9 @@ int main(int argc, char * argv[])
         if (copart_output)
         {
             cout << cstates1.size();
+            cout << float_format(getL3CacheMisses(cstates1[0], cstates2[0])) << "  ";
+            cout << unit_format(getL3CacheMisses(cstates1[0], cstates2[0])) << endl << endl;
+            
             //cout << unit_format(getL3CacheMisses(sstate1, sstate2)); 
         }
 
