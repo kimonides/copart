@@ -1048,7 +1048,7 @@ void print_csv(PCM * m,
 
 void initiate_copart_apps()
 {
-    system("docker run --name dc-server --net caching_network --cpus=1 --cpuset-cpus=0 -d cloudsuite/data-caching:server -t 1 -m 4096 -n 550");
+    system("docker start dc-server");
     struct app *app = (struct app *) malloc(sizeof(struct app));
     app->cpu_core = 0;
     appList.insert(app);
