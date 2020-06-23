@@ -1045,7 +1045,13 @@ void print_csv(PCM * m,
     }
 }
 
+void application_profiling_phase()
+{
+    
+}
 
+//Here I will start and map all the apps to cpu cores.
+//I must also create an app profiling phase.
 void initiate_copart_apps()
 {
     system("docker start dc-server");
@@ -1395,7 +1401,7 @@ int main(int argc, char * argv[])
             //cout << cstates1.size();
             
             if (m->isL3CacheHitRatioAvailable())
-                cout << "    " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0]));
+                cout << "Hit Ratio : " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0])) << endl;
             // cout << float_format(getL3CacheMisses(cstates1[0], cstates2[0])) << "  ";
             // cout << unit_format(getL3CacheMisses(cstates1[0], cstates2[0])) << endl << endl;
             
