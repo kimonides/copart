@@ -156,31 +156,31 @@ void initialize_state(int number_of_apps)
 //     return true;
 // }
 
-void exploreSystemStateSpace()
-{
-    initialize_state(); //this should also set app states
-    int retry_count = 0;
+// void exploreSystemStateSpace()
+// {
+//     initialize_state(); //this should also set app states
+//     int retry_count = 0;
 
-    while (true)
-    {
-        set_system_state();
-        //sleep(PERIOD);
-        update_fsm(app_list); //get data and set app states
+//     while (true)
+//     {
+//         set_system_state();
+//         //sleep(PERIOD);
+//         update_fsm(app_list); //get data and set app states
 
-        struct app *previous_app_list = (struct app *)malloc(sizeof(struct app) * number_of_apps);
-        memcpy(&previous_app_list, &app_list, sizeof(app_list));
+//         struct app *previous_app_list = (struct app *)malloc(sizeof(struct app) * number_of_apps);
+//         memcpy(&previous_app_list, &app_list, sizeof(app_list));
 
-        get_next_system_state();
+//         get_next_system_state();
 
-        if (compare_system_states(app_list, previous_app_list))
-        {
-            if (retry_count < THETA)
-            {
-                get_neighbor_state();
-                retry_count++;
-            }
-            else
-                transition_to_idle_phase();
-        }
-    }
-}
+//         if (compare_system_states(app_list, previous_app_list))
+//         {
+//             if (retry_count < THETA)
+//             {
+//                 get_neighbor_state();
+//                 retry_count++;
+//             }
+//             else
+//                 transition_to_idle_phase();
+//         }
+//     }
+// }
