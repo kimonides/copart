@@ -169,7 +169,7 @@ void sigINT_handler(int signum)
     // output for DEBUG only
     std::cerr << "DEBUG: caught signal to interrupt (" << strsignal(signum) << ").\n";
     // TODO: dump summary, if needed
-    std::cout << signum << endl ;
+    std::cout << signum << std::endl ;
 
     // in case PCM is blocked just return and summary will be dumped in
     // calling function, if needed
