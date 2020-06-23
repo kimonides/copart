@@ -167,17 +167,17 @@ void waitForChild(void * proc_id)
 void sigINT_handler(int signum)
 {
     // output for DEBUG only
-    std::cerr << "DEBUG: caught signal to interrupt (" << strsignal(signum) << ").\n";
+    if (signum != 17 )
+        std::cerr << "DEBUG: caught signal to interrupt (" << strsignal(signum) << ").\n";
     // TODO: dump summary, if needed
-    std::cout << signum << std::endl ;
 
     // in case PCM is blocked just return and summary will be dumped in
     // calling function, if needed
     if (PCM::getInstance()->isBlocked()) {
         return;
     } else {
-        //if (signum == SIGCHLD )
-        return;
+        if (signum == 17 )
+            return;
         exit_cleanup();
         _exit(EXIT_SUCCESS);
     }
