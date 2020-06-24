@@ -1054,11 +1054,11 @@ void application_profiling_phase(PCM *m)
     for (auto &&app : appList)
     {
         //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
-        system("pqos -a \"llc:1=0;\"");
+        system("pqos -a \"llc:1=0;\" > nul");
         cout << "Set core 0 to COS 1" << endl;
 
         cstates1 = m->getCoreCounterState(app->cpu_core);
-        system("pqos -e \"llc:1=0xfffff;\"");
+        system("pqos -e \"llc:1=0xfffff;\" > nul");
         cout << "Running app with all ways" << endl;
 
         MySleepMs(10000);
@@ -1066,7 +1066,7 @@ void application_profiling_phase(PCM *m)
         double IPCfull = getIPC(cstates1, cstates2);
         cout << "IPC with full ways : " << IPCfull << endl;
 
-        system("pqos -e \"llc:1=0x00003;\"");
+        system("pqos -e \"llc:1=0x00003;\" > nul");
         cout << "Running app with 2 ways" << endl;
         std::swap(cstates1, cstates2);
 
@@ -1439,7 +1439,7 @@ int main(int argc, char *argv[])
         if (copart_output)
         {
             //cout << cstates1.size();
-            cout << "Running Profiling Phase" << endl;
+            //cout << "Running Profiling Phase" << endl;
             application_profiling_phase(m);
 
             // if (m->isL3CacheHitRatioAvailable())
