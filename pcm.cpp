@@ -1045,9 +1045,32 @@ void print_csv(PCM * m,
     }
 }
 
-void application_profiling_phase()
+void application_profiling_phase(PCM * m)
 {
-    
+    std::vector<CoreCounterState> cstates1, cstates2;
+    // pqos -e "llc:1=0x000f"
+    for(const &&app : appList)
+    {
+        m->getCoreCounterState(cstates1)
+        system("pqos -e \"llc:1=0xfffff\";");
+        system("pqos -a \"llc:1=" << app->cpu_core <<  "\";");
+        cout << "Running app with all ways" << endl;
+        
+        MySleepMs(10000);
+        m->getCoreCounterState(cstates2);
+        int IPCfull = getIPC(cstates1[app->cpu_core] , cstates2[app->cpu_core]);
+        cout << "IPC with full ways : " << IPCfull << endl;
+
+        system("pqos -e \"llc:1=0x00003\";");
+        cout << "Running app with 2 ways" << endl;
+        std::swap(cstates1,cstates2);
+
+        MySleepMs(10000);
+        m->getCoreCounterState(cstates2);
+        int IPClow = getIPC(cstates1[app->cpu_core],cstates2[app->cpu_core]);
+        cout << "IPC with 2 ways : " << IPClow << endl;
+
+    }
 }
 
 //Here I will start and map all the apps to cpu cores.
