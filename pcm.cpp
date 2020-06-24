@@ -1053,35 +1053,37 @@ void application_profiling_phase(PCM *m)
     //Must add running with mba also when I will change server
     for (auto &&app : appList)
     {
-        //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
         system("pqos -a \"llc:1=0;\" > nul");
-        cout << "Set core 0 to COS 1" << endl;
+        while (true)
+        {   
+            //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
+            cstates1 = m->getCoreCounterState(app->cpu_core);
 
-        cstates1 = m->getCoreCounterState(app->cpu_core);
-        system("pqos -e \"llc:1=0xfffff;\" > nul");
-        cout << "Running app with all ways" << endl;
+            system("pqos -e \"llc:1=0xfffff;\" > nul");
+            MySleepMs(10000);
+            cstates2 = m->getCoreCounterState(app->cpu_core);
+            double IPCfull = getIPC(cstates1, cstates2);
+            cout << "IPC with full ways : " << IPCfull << endl;
 
-        MySleepMs(10000);
-        cstates2 = m->getCoreCounterState(app->cpu_core);
-        double IPCfull = getIPC(cstates1, cstates2);
-        cout << "IPC with full ways : " << IPCfull << endl;
+            std::swap(cstates1,cstates2);
 
-        system("pqos -e \"llc:1=0x00003;\" > nul");
-        cout << "Running app with 2 ways" << endl;
-        std::swap(cstates1, cstates2);
+            system("pqos -e \"llc:1=0x00003;\" > nul");
+            MySleepMs(10000);
+            cstates2 = m->getCoreCounterState(app->cpu_core);
+            double IPClow = getIPC(cstates1, cstates2);
+            cout << "IPC with 2 ways : " << IPClow << endl;
 
-        MySleepMs(10000);
-        cstates2 = m->getCoreCounterState(app->cpu_core);
-        double IPClow = getIPC(cstates1, cstates2);
-        cout << "IPC with 2 ways : " << IPClow << endl;
+            app->IPCfull = IPCfull;
+            cout << (IPCfull-IPClow)/IPCfull << endl << endl << endl << endl;
+            
+            // if(  (IPCfull-IPClow)/IPCfull > 0.1 )
+            // {
+            //     cout << "DEMAND STATE" << endl ;
+            //     app->state=consumer;
+            //     app->preference=LLC;
+            // }
 
-        app->IPCfull = IPCfull;
-        cout << (IPCfull-IPClow)/IPCfull << endl;
-        if(  (IPCfull-IPClow)/IPCfull > 0.1 )
-        {
-            cout << "DEMAND STATE" << endl ;
-            app->state=consumer;
-            app->preference=LLC;
+            //std::swap(cstates1,cstates2);
         }
     }
 }
