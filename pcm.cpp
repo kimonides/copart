@@ -1043,16 +1043,20 @@ void print_csv(PCM *m,
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void application_profiling_phase(PCM *m)
 {
+    cout << endl << endl << endl << endl << "Application Profiling Phase" << endl << endl << endl;
     CoreCounterState cstates1, cstates2;
-    // pqos -e "llc:1=0x000f"
     for (auto &&app : appList)
     {
-        cstates1 = m->getCoreCounterState(app->cpu_core);
-        system("pqos -e \"llc:1=0xfffff\";");
         const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
         system(command);
+        cout << "Set app to COS 1" << endl;
+
+        cstates1 = m->getCoreCounterState(app->cpu_core);
+        system("pqos -e \"llc:1=0xfffff\";");
         cout << "Running app with all ways" << endl;
 
         MySleepMs(10000);
@@ -1413,6 +1417,7 @@ int main(int argc, char *argv[])
         TimeAfterSleep = m->getTickCount();
 
         m->getAllCounterStates(sstate2, sktstate2, cstates2);
+        m->getMaxIPC
 
         // if (csv_output)
         //     print_csv(m, cstates1, cstates2, sktstate1, sktstate2, ycores, sstate1, sstate2,
