@@ -1417,7 +1417,6 @@ int main(int argc, char *argv[])
         TimeAfterSleep = m->getTickCount();
 
         m->getAllCounterStates(sstate2, sktstate2, cstates2);
-        m->getMaxIPC
 
         // if (csv_output)
         //     print_csv(m, cstates1, cstates2, sktstate1, sktstate2, ycores, sstate1, sstate2,
