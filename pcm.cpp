@@ -1069,7 +1069,7 @@ void application_profiling_phase(PCM *m)
 
             std::swap(cstates1,cstates2);
 
-            system("pqos -e \"llc:1=0x00003;\" > nul");
+            system("pqos -e \"llc:1=0x00000;\" > nul");
             MySleepMs(10000);
             cstates2 = m->getCoreCounterState(app->cpu_core);
             double IPClow = getIPC(cstates1, cstates2);
