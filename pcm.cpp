@@ -14,12 +14,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 //            Thomas Willhalm,
 //            Patrick Ungerer
 
-
 /*!     \file pcm.cpp
 \brief Example of using CPU counters: implements a simple performance counter monitoring utility
 */
 #include "copart.h"
-
 
 #define HACK_TO_REMOVE_DUPLICATE_ERROR
 #include <iostream>
@@ -44,8 +42,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "utils.h"
 
 #define SIZE (10000000)
-#define PCM_DELAY_DEFAULT 1.0 // in seconds
-#define PCM_DELAY_MIN 0.015 // 15 milliseconds is practical on most modern CPUs
+#define PCM_DELAY_DEFAULT 1.0       // in seconds
+#define PCM_DELAY_MIN 0.015         // 15 milliseconds is practical on most modern CPUs
 #define PCM_CALIBRATION_INTERVAL 50 // calibrate clock only every 50th iteration
 #define MAX_CORES 4096
 
@@ -73,14 +71,14 @@ std::string l3cache_occ_format(uint64 o)
     if (o == PCM_INVALID_QOS_MONITORING_DATA)
         return "N/A";
 
-    snprintf(buffer, 1024, "%6d", (uint32) o);
+    snprintf(buffer, 1024, "%6d", (uint32)o);
     return buffer;
 }
 
 void print_help(const string prog_name)
 {
     cerr << "\n Usage: \n " << prog_name
-        << " --help | [delay] [options] [-- external_program [external_program_options]]\n";
+         << " --help | [delay] [options] [-- external_program [external_program_options]]\n";
     cerr << "   <delay>                           => time interval to sample performance counters.\n";
     cerr << "                                        If not specified, or 0, with external program given\n";
     cerr << "                                        will read counters only after external program finishes\n";
@@ -96,7 +94,7 @@ void print_help(const string prog_name)
     cerr << "  -nsys | --nosystem  | /nsys        => hide system related output\n";
     cerr << "  -m    | --multiple-instances | /m  => allow multiple PCM instances running in parallel\n";
     cerr << "  -csv[=file.csv] | /csv[=file.csv]  => output compact CSV format to screen or\n"
-        << "                                        to a file, in case filename is provided\n";
+         << "                                        to a file, in case filename is provided\n";
     cerr << "  -i[=number] | /i[=number]          => allow to determine number of iterations\n";
     print_help_force_rtm_abort_mode(37);
     cerr << " Examples:\n";
@@ -107,13 +105,10 @@ void print_help(const string prog_name)
     cerr << "\n";
 }
 
-
 template <class State>
-void print_basic_metrics(const PCM * m, const State & state1, const State & state2)
+void print_basic_metrics(const PCM *m, const State &state1, const State &state2)
 {
-    cout << "     " << getExecUsage(state1, state2) <<
-        "   " << getIPC(state1, state2) <<
-        "   " << getRelativeFrequency(state1, state2);
+    cout << "     " << getExecUsage(state1, state2) << "   " << getIPC(state1, state2) << "   " << getRelativeFrequency(state1, state2);
     if (m->isActiveRelativeFrequencyAvailable())
         cout << "    " << getActiveRelativeFrequency(state1, state2);
     if (m->isL3CacheMissesAvailable())
@@ -131,7 +126,7 @@ void print_basic_metrics(const PCM * m, const State & state1, const State & stat
 }
 
 template <class State>
-void print_other_metrics(const PCM * m, const State & state1, const State & state2)
+void print_other_metrics(const PCM *m, const State &state1, const State &state2)
 {
     if (m->L3CacheOccupancyMetricAvailable())
         cout << "   " << setw(6) << l3cache_occ_format(getL3CacheOccupancy(state2));
@@ -142,20 +137,19 @@ void print_other_metrics(const PCM * m, const State & state1, const State & stat
     cout << "     " << temp_format(state2.getThermalHeadroom()) << "\n";
 }
 
-void print_output(PCM * m,
-    const std::vector<CoreCounterState> & cstates1,
-    const std::vector<CoreCounterState> & cstates2,
-    const std::vector<SocketCounterState> & sktstate1,
-    const std::vector<SocketCounterState> & sktstate2,
-    const std::bitset<MAX_CORES> & ycores,
-    const SystemCounterState& sstate1,
-    const SystemCounterState& sstate2,
-    const int cpu_model,
-    const bool show_core_output,
-    const bool show_partial_core_output,
-    const bool show_socket_output,
-    const bool show_system_output
-    )
+void print_output(PCM *m,
+                  const std::vector<CoreCounterState> &cstates1,
+                  const std::vector<CoreCounterState> &cstates2,
+                  const std::vector<SocketCounterState> &sktstate1,
+                  const std::vector<SocketCounterState> &sktstate2,
+                  const std::bitset<MAX_CORES> &ycores,
+                  const SystemCounterState &sstate1,
+                  const SystemCounterState &sstate2,
+                  const int cpu_model,
+                  const bool show_core_output,
+                  const bool show_partial_core_output,
+                  const bool show_socket_output,
+                  const bool show_system_output)
 {
     cout << "\n";
     cout << " EXEC  : instructions per nominal CPU cycle\n";
@@ -180,23 +174,35 @@ void print_output(PCM * m,
         cout << " L3MPI : number of L3 (read) cache misses per instruction\n";
     if (m->isL2CacheMissesAvailable())
         cout << " L2MPI : number of L2 (read) cache misses per instruction\n";
-    if (m->memoryTrafficMetricsAvailable()) cout << " READ  : bytes read from main memory controller (in GBytes)\n";
-    if (m->memoryTrafficMetricsAvailable()) cout << " WRITE : bytes written to main memory controller (in GBytes)\n";
-    if (m->localMemoryRequestRatioMetricAvailable()) cout << " LOCAL : ratio of local memory requests to memory controller in %\n";
-    if (m->LLCReadMissLatencyMetricsAvailable()) cout << "LLCRDMISSLAT: average latency of last level cache miss for reads and prefetches (in ns)\n";
-    if (m->PMMTrafficMetricsAvailable()) cout << " PMM RD : bytes read from PMM memory (in GBytes)\n";
-    if (m->PMMTrafficMetricsAvailable()) cout << " PMM WR : bytes written to PMM memory (in GBytes)\n";
-    if (m->MCDRAMmemoryTrafficMetricsAvailable()) cout << " MCDRAM READ  : bytes read from MCDRAM controller (in GBytes)\n";
-    if (m->MCDRAMmemoryTrafficMetricsAvailable()) cout << " MCDRAM WRITE : bytes written to MCDRAM controller (in GBytes)\n";
-    if (m->memoryIOTrafficMetricAvailable()) cout << " IO    : bytes read/written due to IO requests to memory controller (in GBytes); this may be an over estimate due to same-cache-line partial requests\n";
-    if (m->L3CacheOccupancyMetricAvailable()) cout << " L3OCC : L3 occupancy (in KBytes)\n";
-    if (m->CoreLocalMemoryBWMetricAvailable()) cout << " LMB   : L3 cache external bandwidth satisfied by local memory (in MBytes)\n";
-    if (m->CoreRemoteMemoryBWMetricAvailable()) cout << " RMB   : L3 cache external bandwidth satisfied by remote memory (in MBytes)\n";
+    if (m->memoryTrafficMetricsAvailable())
+        cout << " READ  : bytes read from main memory controller (in GBytes)\n";
+    if (m->memoryTrafficMetricsAvailable())
+        cout << " WRITE : bytes written to main memory controller (in GBytes)\n";
+    if (m->localMemoryRequestRatioMetricAvailable())
+        cout << " LOCAL : ratio of local memory requests to memory controller in %\n";
+    if (m->LLCReadMissLatencyMetricsAvailable())
+        cout << "LLCRDMISSLAT: average latency of last level cache miss for reads and prefetches (in ns)\n";
+    if (m->PMMTrafficMetricsAvailable())
+        cout << " PMM RD : bytes read from PMM memory (in GBytes)\n";
+    if (m->PMMTrafficMetricsAvailable())
+        cout << " PMM WR : bytes written to PMM memory (in GBytes)\n";
+    if (m->MCDRAMmemoryTrafficMetricsAvailable())
+        cout << " MCDRAM READ  : bytes read from MCDRAM controller (in GBytes)\n";
+    if (m->MCDRAMmemoryTrafficMetricsAvailable())
+        cout << " MCDRAM WRITE : bytes written to MCDRAM controller (in GBytes)\n";
+    if (m->memoryIOTrafficMetricAvailable())
+        cout << " IO    : bytes read/written due to IO requests to memory controller (in GBytes); this may be an over estimate due to same-cache-line partial requests\n";
+    if (m->L3CacheOccupancyMetricAvailable())
+        cout << " L3OCC : L3 occupancy (in KBytes)\n";
+    if (m->CoreLocalMemoryBWMetricAvailable())
+        cout << " LMB   : L3 cache external bandwidth satisfied by local memory (in MBytes)\n";
+    if (m->CoreRemoteMemoryBWMetricAvailable())
+        cout << " RMB   : L3 cache external bandwidth satisfied by remote memory (in MBytes)\n";
     cout << " TEMP  : Temperature reading in 1 degree Celsius relative to the TjMax temperature (thermal headroom): 0 corresponds to the max temperature\n";
     cout << " energy: Energy in Joules\n";
     cout << "\n";
     cout << "\n";
-    const char * longDiv = "---------------------------------------------------------------------------------------------------------------\n";
+    const char *longDiv = "---------------------------------------------------------------------------------------------------------------\n";
     cout.precision(2);
     cout << std::fixed;
     if (cpu_model == PCM::KNL)
@@ -238,8 +244,8 @@ void print_output(PCM * m,
 
             if (cpu_model == PCM::KNL)
                 cout << setfill(' ') << internal << setw(5) << i
-                << setw(5) << m->getTileId(i) << setw(5) << m->getCoreId(i)
-                << setw(7) << m->getThreadId(i);
+                     << setw(5) << m->getTileId(i) << setw(5) << m->getCoreId(i)
+                     << setw(7) << m->getThreadId(i);
             else
                 cout << " " << setw(3) << i << "   " << setw(2) << m->getSocketId(i);
 
@@ -265,7 +271,7 @@ void print_output(PCM * m,
     if (show_system_output)
     {
         if (cpu_model == PCM::KNL)
-            cout << setw(22) << left << " TOTAL" << internal << setw(7-5);
+            cout << setw(22) << left << " TOTAL" << internal << setw(7 - 5);
         else
             cout << " TOTAL  *";
 
@@ -279,13 +285,13 @@ void print_output(PCM * m,
             cout << "    N/A ";
 
         cout << "     N/A\n";
-        cout << "\n Instructions retired: " << unit_format(getInstructionsRetired(sstate1, sstate2)) << " ; Active cycles: " << unit_format(getCycles(sstate1, sstate2)) << " ; Time (TSC): " << unit_format(getInvariantTSC(cstates1[0], cstates2[0])) << "ticks ; C0 (active,non-halted) core residency: " << (getCoreCStateResidency(0, sstate1, sstate2)*100.) << " %\n";
+        cout << "\n Instructions retired: " << unit_format(getInstructionsRetired(sstate1, sstate2)) << " ; Active cycles: " << unit_format(getCycles(sstate1, sstate2)) << " ; Time (TSC): " << unit_format(getInvariantTSC(cstates1[0], cstates2[0])) << "ticks ; C0 (active,non-halted) core residency: " << (getCoreCStateResidency(0, sstate1, sstate2) * 100.) << " %\n";
         cout << "\n";
         for (int s = 1; s <= PCM::MAX_C_STATE; ++s)
         {
             if (m->isCoreCStateResidencySupported(s))
             {
-                std::cout << " C" << s << " core residency: " << (getCoreCStateResidency(s, sstate1, sstate2)*100.) << " %;";
+                std::cout << " C" << s << " core residency: " << (getCoreCStateResidency(s, sstate1, sstate2) * 100.) << " %;";
             }
         }
         cout << "\n";
@@ -301,7 +307,7 @@ void print_output(PCM * m,
             }
             if (m->isPackageCStateResidencySupported(s))
             {
-                std::cout << " C" << s << " package residency: " << (getPackageCStateResidency(s, sstate1, sstate2)*100.) << " %;";
+                std::cout << " C" << s << " package residency: " << (getPackageCStateResidency(s, sstate1, sstate2) * 100.) << " %;";
                 PackageCStateStackedBar.push_back(StackedBarItem(getPackageCStateResidency(s, sstate1, sstate2), "", fill));
             }
         }
@@ -337,8 +343,8 @@ void print_output(PCM * m,
                     cout << " " << m->xPI() << i << "  ";
             }
 
-            cout << "\n" << longDiv;
-
+            cout << "\n"
+                 << longDiv;
 
             for (uint32 i = 0; i < m->getNumSockets(); ++i)
             {
@@ -378,12 +384,12 @@ void print_output(PCM * m,
             for (uint32 i = 0; i < qpiLinks; ++i)
                 cout << " " << m->xPI() << i << "    ";
 
-
             cout << "| ";
             for (uint32 i = 0; i < qpiLinks; ++i)
                 cout << " " << m->xPI() << i << "  ";
 
-            cout << "\n" << longDiv;
+            cout << "\n"
+                 << longDiv;
 
             for (uint32 i = 0; i < m->getNumSockets(); ++i)
             {
@@ -425,67 +431,67 @@ void print_output(PCM * m,
         cout << longDiv;
         for (uint32 i = 0; i < m->getNumSockets(); ++i)
         {
-                cout << " SKT  " << setw(2) << i;
-                if (m->memoryTrafficMetricsAvailable())
-                    cout << "    " << setw(5) << getBytesReadFromMC(sktstate1[i], sktstate2[i]) / double(1e9) <<
-                            "    " << setw(5) << getBytesWrittenToMC(sktstate1[i], sktstate2[i]) / double(1e9);
-                if (m->localMemoryRequestRatioMetricAvailable())
-                    cout << "  " << setw(3) << int(100.* getLocalMemoryRequestRatio(sktstate1[i], sktstate2[i])) << " %";
-                if (m->PMMTrafficMetricsAvailable())
-                    cout << "     " << setw(5) << getBytesReadFromPMM(sktstate1[i], sktstate2[i]) / double(1e9) <<
-                            "     " << setw(5) << getBytesWrittenToPMM(sktstate1[i], sktstate2[i]) / double(1e9);
-                if (m->MCDRAMmemoryTrafficMetricsAvailable())
-                    cout << "   " << setw(11) << getBytesReadFromEDC(sktstate1[i], sktstate2[i]) / double(1e9) <<
-                            "    " << setw(11) << getBytesWrittenToEDC(sktstate1[i], sktstate2[i]) / double(1e9);
-                if (m->memoryIOTrafficMetricAvailable())
-                    cout << "    " << setw(5) << getIORequestBytesFromMC(sktstate1[i], sktstate2[i]) / double(1e9);
-                cout << "     ";
-                if(m->packageEnergyMetricsAvailable()) {
-                  cout << setw(6) << getConsumedJoules(sktstate1[i], sktstate2[i]);
-                }
-                cout << "     ";
-                if(m->dramEnergyMetricsAvailable()) {
-                  cout << setw(6) << getDRAMConsumedJoules(sktstate1[i], sktstate2[i]);
-                }
-                cout << "         ";
-                if (m->LLCReadMissLatencyMetricsAvailable()) {
-                  cout << setw(6) << getLLCReadMissLatency(sktstate1[i], sktstate2[i]);
-                }
-                cout << "\n";
+            cout << " SKT  " << setw(2) << i;
+            if (m->memoryTrafficMetricsAvailable())
+                cout << "    " << setw(5) << getBytesReadFromMC(sktstate1[i], sktstate2[i]) / double(1e9) << "    " << setw(5) << getBytesWrittenToMC(sktstate1[i], sktstate2[i]) / double(1e9);
+            if (m->localMemoryRequestRatioMetricAvailable())
+                cout << "  " << setw(3) << int(100. * getLocalMemoryRequestRatio(sktstate1[i], sktstate2[i])) << " %";
+            if (m->PMMTrafficMetricsAvailable())
+                cout << "     " << setw(5) << getBytesReadFromPMM(sktstate1[i], sktstate2[i]) / double(1e9) << "     " << setw(5) << getBytesWrittenToPMM(sktstate1[i], sktstate2[i]) / double(1e9);
+            if (m->MCDRAMmemoryTrafficMetricsAvailable())
+                cout << "   " << setw(11) << getBytesReadFromEDC(sktstate1[i], sktstate2[i]) / double(1e9) << "    " << setw(11) << getBytesWrittenToEDC(sktstate1[i], sktstate2[i]) / double(1e9);
+            if (m->memoryIOTrafficMetricAvailable())
+                cout << "    " << setw(5) << getIORequestBytesFromMC(sktstate1[i], sktstate2[i]) / double(1e9);
+            cout << "     ";
+            if (m->packageEnergyMetricsAvailable())
+            {
+                cout << setw(6) << getConsumedJoules(sktstate1[i], sktstate2[i]);
+            }
+            cout << "     ";
+            if (m->dramEnergyMetricsAvailable())
+            {
+                cout << setw(6) << getDRAMConsumedJoules(sktstate1[i], sktstate2[i]);
+            }
+            cout << "         ";
+            if (m->LLCReadMissLatencyMetricsAvailable())
+            {
+                cout << setw(6) << getLLCReadMissLatency(sktstate1[i], sktstate2[i]);
+            }
+            cout << "\n";
         }
         cout << longDiv;
-        if (m->getNumSockets() > 1) {
+        if (m->getNumSockets() > 1)
+        {
             cout << "       *";
             if (m->memoryTrafficMetricsAvailable())
-                cout << "    " << setw(5) << getBytesReadFromMC(sstate1, sstate2) / double(1e9) <<
-                        "    " << setw(5) << getBytesWrittenToMC(sstate1, sstate2) / double(1e9);
+                cout << "    " << setw(5) << getBytesReadFromMC(sstate1, sstate2) / double(1e9) << "    " << setw(5) << getBytesWrittenToMC(sstate1, sstate2) / double(1e9);
             if (m->localMemoryRequestRatioMetricAvailable())
-                cout << "  " << setw(3) << int(100.* getLocalMemoryRequestRatio(sstate1, sstate2)) << " %";
+                cout << "  " << setw(3) << int(100. * getLocalMemoryRequestRatio(sstate1, sstate2)) << " %";
             if (m->PMMTrafficMetricsAvailable())
-                cout << "     " << setw(5) << getBytesReadFromPMM(sstate1, sstate2) / double(1e9) <<
-                        "     " << setw(5) << getBytesWrittenToPMM(sstate1, sstate2) / double(1e9);
+                cout << "     " << setw(5) << getBytesReadFromPMM(sstate1, sstate2) / double(1e9) << "     " << setw(5) << getBytesWrittenToPMM(sstate1, sstate2) / double(1e9);
             if (m->memoryIOTrafficMetricAvailable())
                 cout << "    " << setw(5) << getIORequestBytesFromMC(sstate1, sstate2) / double(1e9);
             cout << "     ";
-            if (m->packageEnergyMetricsAvailable()) {
+            if (m->packageEnergyMetricsAvailable())
+            {
                 cout << setw(6) << getConsumedJoules(sstate1, sstate2);
             }
             cout << "     ";
-            if (m->dramEnergyMetricsAvailable()) {
+            if (m->dramEnergyMetricsAvailable())
+            {
                 cout << setw(6) << getDRAMConsumedJoules(sstate1, sstate2);
             }
             cout << "         ";
-            if (m->LLCReadMissLatencyMetricsAvailable()) {
+            if (m->LLCReadMissLatencyMetricsAvailable())
+            {
                 cout << setw(6) << getLLCReadMissLatency(sstate1, sstate2);
             }
             cout << "\n";
         }
     }
-
 }
 
-
-void print_basic_metrics_csv_header(const PCM * m)
+void print_basic_metrics_csv_header(const PCM *m)
 {
     cout << "EXEC,IPC,FREQ,";
     if (m->isActiveRelativeFrequencyAvailable())
@@ -504,33 +510,32 @@ void print_basic_metrics_csv_header(const PCM * m)
         cout << "L2MPI,";
 }
 
-void print_basic_metrics_csv_semicolons(const PCM * m)
+void print_basic_metrics_csv_semicolons(const PCM *m)
 {
-    cout << ",,,";    // EXEC;IPC;FREQ;
+    cout << ",,,"; // EXEC;IPC;FREQ;
     if (m->isActiveRelativeFrequencyAvailable())
-        cout << ",";  // AFREQ;
+        cout << ","; // AFREQ;
     if (m->isL3CacheMissesAvailable())
-        cout << ",";  // L3MISS;
+        cout << ","; // L3MISS;
     if (m->isL2CacheMissesAvailable())
-        cout << ",";  // L2MISS;
+        cout << ","; // L2MISS;
     if (m->isL3CacheHitRatioAvailable())
-        cout << ",";  // L3HIT
+        cout << ","; // L3HIT
     if (m->isL2CacheHitRatioAvailable())
-        cout << ",";  // L2HIT;
+        cout << ","; // L2HIT;
     if (m->isL3CacheMissesAvailable())
-        cout << ",";  // L3MPI;
+        cout << ","; // L3MPI;
     if (m->isL2CacheMissesAvailable())
-        cout << ",";  // L2MPI;
+        cout << ","; // L2MPI;
 }
 
-void print_csv_header(PCM * m,
-    const std::bitset<MAX_CORES> & ycores,
-    const int /*cpu_model*/,
-    const bool show_core_output,
-    const bool show_partial_core_output,
-    const bool show_socket_output,
-    const bool show_system_output
-    )
+void print_csv_header(PCM *m,
+                      const std::bitset<MAX_CORES> &ycores,
+                      const int /*cpu_model*/,
+                      const bool show_core_output,
+                      const bool show_partial_core_output,
+                      const bool show_socket_output,
+                      const bool show_system_output)
 {
     // print first header line
     cout << "System,,";
@@ -551,7 +556,8 @@ void print_csv_header(PCM * m,
             cout << ",,";
 
         cout << ",,,,,,,";
-        if (m->getNumSockets() > 1) { // QPI info only for multi socket systems
+        if (m->getNumSockets() > 1)
+        { // QPI info only for multi socket systems
             if (m->incomingQPITrafficMetricsAvailable())
                 cout << ",,";
             if (m->outgoingQPITrafficMetricsAvailable())
@@ -591,7 +597,7 @@ void print_csv_header(PCM * m,
             if (m->localMemoryRequestRatioMetricAvailable())
                 cout << ",";
             if (m->PMMTrafficMetricsAvailable())
-                 cout << ",,";
+                cout << ",,";
             if (m->MCDRAMmemoryTrafficMetricsAvailable())
                 cout << ",,";
         }
@@ -629,17 +635,16 @@ void print_csv_header(PCM * m,
             }
         }
 
-
         for (uint32 i = 0; i < m->getNumSockets(); ++i)
         {
             cout << "SKT" << i << " Core C-State";
             for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-            if (m->isCoreCStateResidencySupported(s))
-                cout << ",";
+                if (m->isCoreCStateResidencySupported(s))
+                    cout << ",";
             cout << "SKT" << i << " Package C-State";
             for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-            if (m->isPackageCStateResidencySupported(s))
-                cout << ",";
+                if (m->isPackageCStateResidencySupported(s))
+                    cout << ",";
         }
 
         if (m->packageEnergyMetricsAvailable())
@@ -672,11 +677,11 @@ void print_csv_header(PCM * m,
             cout << "Core" << i << " (Socket" << setw(2) << m->getSocketId(i) << ")";
             print_basic_metrics_csv_semicolons(m);
             if (m->L3CacheOccupancyMetricAvailable())
-                cout << ',' ;
+                cout << ',';
             if (m->CoreLocalMemoryBWMetricAvailable())
-                cout << ',' ;
+                cout << ',';
             if (m->CoreRemoteMemoryBWMetricAvailable())
-                cout << ',' ;
+                cout << ',';
 
             for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
                 if (m->isCoreCStateResidencySupported(s))
@@ -692,7 +697,7 @@ void print_csv_header(PCM * m,
         print_basic_metrics_csv_header(m);
 
         if (m->memoryTrafficMetricsAvailable())
-                cout << "READ,WRITE,";
+            cout << "READ,WRITE,";
 
         if (m->localMemoryRequestRatioMetricAvailable())
             cout << "LOCAL,";
@@ -701,10 +706,11 @@ void print_csv_header(PCM * m,
             cout << "PMM_RD,PMM_WR,";
 
         if (m->MCDRAMmemoryTrafficMetricsAvailable())
-                cout << "MCDRAM_READ,MCDRAM_WRITE,";
+            cout << "MCDRAM_READ,MCDRAM_WRITE,";
 
         cout << "INST,ACYC,TIME(ticks),PhysIPC,PhysIPC%,INSTnom,INSTnom%,";
-        if (m->getNumSockets() > 1) { // QPI info only for multi socket systems
+        if (m->getNumSockets() > 1)
+        { // QPI info only for multi socket systems
             if (m->incomingQPITrafficMetricsAvailable())
                 cout << "Total" << m->xPI() << "in," << m->xPI() << "toMC,";
             if (m->outgoingQPITrafficMetricsAvailable())
@@ -712,12 +718,12 @@ void print_csv_header(PCM * m,
         }
 
         for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-        if (m->isCoreCStateResidencySupported(s))
-            cout << "C" << s << "res%,";
+            if (m->isCoreCStateResidencySupported(s))
+                cout << "C" << s << "res%,";
 
         for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-        if (m->isPackageCStateResidencySupported(s))
-            cout << "C" << s << "res%,";
+            if (m->isPackageCStateResidencySupported(s))
+                cout << "C" << s << "res%,";
 
         if (m->packageEnergyMetricsAvailable())
             cout << "Proc Energy (Joules),";
@@ -727,27 +733,26 @@ void print_csv_header(PCM * m,
             cout << "LLCRDMISSLAT (ns),";
     }
 
-
     if (show_socket_output)
     {
         for (uint32 i = 0; i < m->getNumSockets(); ++i)
         {
-             print_basic_metrics_csv_header(m);
-             if (m->L3CacheOccupancyMetricAvailable())
-                 cout << "L3OCC,";
-             if (m->CoreLocalMemoryBWMetricAvailable())
-                 cout << "LMB,";
-             if (m->CoreRemoteMemoryBWMetricAvailable())
-                 cout << "RMB,";
-             if (m->memoryTrafficMetricsAvailable())
-                 cout << "READ,WRITE,";
-             if (m->localMemoryRequestRatioMetricAvailable())
-                 cout << "LOCAL,";
-             if (m->PMMTrafficMetricsAvailable())
-                 cout << "PMM_RD,PMM_WR,";
-             if (m->MCDRAMmemoryTrafficMetricsAvailable())
-                 cout << "MCDRAM_READ,MCDRAM_WRITE,";
-             cout << "TEMP,";
+            print_basic_metrics_csv_header(m);
+            if (m->L3CacheOccupancyMetricAvailable())
+                cout << "L3OCC,";
+            if (m->CoreLocalMemoryBWMetricAvailable())
+                cout << "LMB,";
+            if (m->CoreRemoteMemoryBWMetricAvailable())
+                cout << "RMB,";
+            if (m->memoryTrafficMetricsAvailable())
+                cout << "READ,WRITE,";
+            if (m->localMemoryRequestRatioMetricAvailable())
+                cout << "LOCAL,";
+            if (m->PMMTrafficMetricsAvailable())
+                cout << "PMM_RD,PMM_WR,";
+            if (m->MCDRAMmemoryTrafficMetricsAvailable())
+                cout << "MCDRAM_READ,MCDRAM_WRITE,";
+            cout << "TEMP,";
         }
 
         if (m->getNumSockets() > 1 && (m->incomingQPITrafficMetricsAvailable())) // QPI info only for multi socket systems
@@ -760,8 +765,8 @@ void print_csv_header(PCM * m,
                     cout << m->xPI() << i << ",";
 
                 if (m->qpiUtilizationMetricsAvailable())
-                for (uint32 i = 0; i < qpiLinks; ++i)
-                    cout << m->xPI() << i << ",";
+                    for (uint32 i = 0; i < qpiLinks; ++i)
+                        cout << m->xPI() << i << ",";
             }
         }
 
@@ -780,12 +785,12 @@ void print_csv_header(PCM * m,
         for (uint32 i = 0; i < m->getNumSockets(); ++i)
         {
             for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-            if (m->isCoreCStateResidencySupported(s))
-                cout << "C" << s << "res%,";
+                if (m->isCoreCStateResidencySupported(s))
+                    cout << "C" << s << "res%,";
 
             for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-            if (m->isPackageCStateResidencySupported(s))
-                cout << "C" << s << "res%,";
+                if (m->isPackageCStateResidencySupported(s))
+                    cout << "C" << s << "res%,";
         }
 
         if (m->packageEnergyMetricsAvailable())
@@ -830,11 +835,9 @@ void print_csv_header(PCM * m,
 }
 
 template <class State>
-void print_basic_metrics_csv(const PCM * m, const State & state1, const State & state2, const bool print_last_semicolon = true)
+void print_basic_metrics_csv(const PCM *m, const State &state1, const State &state2, const bool print_last_semicolon = true)
 {
-    cout << getExecUsage(state1, state2) <<
-        ',' << getIPC(state1, state2) <<
-        ',' << getRelativeFrequency(state1, state2);
+    cout << getExecUsage(state1, state2) << ',' << getIPC(state1, state2) << ',' << getRelativeFrequency(state1, state2);
 
     if (m->isActiveRelativeFrequencyAvailable())
         cout << ',' << getActiveRelativeFrequency(state1, state2);
@@ -855,7 +858,7 @@ void print_basic_metrics_csv(const PCM * m, const State & state1, const State & 
 }
 
 template <class State>
-void print_other_metrics_csv(const PCM * m, const State & state1, const State & state2)
+void print_other_metrics_csv(const PCM *m, const State &state1, const State &state2)
 {
     if (m->L3CacheOccupancyMetricAvailable())
         cout << ',' << l3cache_occ_format(getL3CacheOccupancy(state2));
@@ -865,20 +868,19 @@ void print_other_metrics_csv(const PCM * m, const State & state1, const State & 
         cout << ',' << getRemoteMemoryBW(state1, state2);
 }
 
-void print_csv(PCM * m,
-    const std::vector<CoreCounterState> & cstates1,
-    const std::vector<CoreCounterState> & cstates2,
-    const std::vector<SocketCounterState> & sktstate1,
-    const std::vector<SocketCounterState> & sktstate2,
-    const std::bitset<MAX_CORES> & ycores,
-    const SystemCounterState& sstate1,
-    const SystemCounterState& sstate2,
-    const int /*cpu_model*/,
-    const bool show_core_output,
-    const bool show_partial_core_output,
-    const bool show_socket_output,
-    const bool show_system_output
-    )
+void print_csv(PCM *m,
+               const std::vector<CoreCounterState> &cstates1,
+               const std::vector<CoreCounterState> &cstates2,
+               const std::vector<SocketCounterState> &sktstate1,
+               const std::vector<SocketCounterState> &sktstate2,
+               const std::bitset<MAX_CORES> &ycores,
+               const SystemCounterState &sstate1,
+               const SystemCounterState &sstate2,
+               const int /*cpu_model*/,
+               const bool show_core_output,
+               const bool show_partial_core_output,
+               const bool show_socket_output,
+               const bool show_system_output)
 {
 #ifndef _MSC_VER
     struct timeval timestamp;
@@ -887,13 +889,14 @@ void print_csv(PCM * m,
     tm tt = pcm_localtime();
     char old_fill = cout.fill('0');
     cout.precision(3);
-    cout << "\n" << setw(4) << 1900 + tt.tm_year << '-' << setw(2) << 1 + tt.tm_mon << '-'
-        << setw(2) << tt.tm_mday << ',' << setw(2) << tt.tm_hour << ':'
-        << setw(2) << tt.tm_min << ':' << setw(2) << tt.tm_sec
+    cout << "\n"
+         << setw(4) << 1900 + tt.tm_year << '-' << setw(2) << 1 + tt.tm_mon << '-'
+         << setw(2) << tt.tm_mday << ',' << setw(2) << tt.tm_hour << ':'
+         << setw(2) << tt.tm_min << ':' << setw(2) << tt.tm_sec
 #ifdef _MSC_VER
-        << ',';
+         << ',';
 #else
-        << "." << setw(3) << ceil(timestamp.tv_usec / 1000) << ',';
+         << "." << setw(3) << ceil(timestamp.tv_usec / 1000) << ',';
 #endif
     cout.fill(old_fill);
 
@@ -902,43 +905,41 @@ void print_csv(PCM * m,
         print_basic_metrics_csv(m, sstate1, sstate2);
 
         if (m->memoryTrafficMetricsAvailable())
-                cout << getBytesReadFromMC(sstate1, sstate2) / double(1e9) <<
-                ',' << getBytesWrittenToMC(sstate1, sstate2) / double(1e9) << ',';
+            cout << getBytesReadFromMC(sstate1, sstate2) / double(1e9) << ',' << getBytesWrittenToMC(sstate1, sstate2) / double(1e9) << ',';
 
         if (m->localMemoryRequestRatioMetricAvailable())
             cout << int(100. * getLocalMemoryRequestRatio(sstate1, sstate2)) << ',';
 
         if (m->PMMTrafficMetricsAvailable())
-            cout << getBytesReadFromPMM(sstate1, sstate2) / double(1e9) <<
-            ',' << getBytesWrittenToPMM(sstate1, sstate2) / double(1e9) << ',';
+            cout << getBytesReadFromPMM(sstate1, sstate2) / double(1e9) << ',' << getBytesWrittenToPMM(sstate1, sstate2) / double(1e9) << ',';
 
         if (m->MCDRAMmemoryTrafficMetricsAvailable())
-                cout << getBytesReadFromEDC(sstate1, sstate2) / double(1e9) <<
-                ',' << getBytesWrittenToEDC(sstate1, sstate2) / double(1e9) << ',';
+            cout << getBytesReadFromEDC(sstate1, sstate2) / double(1e9) << ',' << getBytesWrittenToEDC(sstate1, sstate2) / double(1e9) << ',';
 
         cout << float_format(getInstructionsRetired(sstate1, sstate2)) << ","
-            << float_format(getCycles(sstate1, sstate2)) << ","
-            << float_format(getInvariantTSC(cstates1[0], cstates2[0])) << ","
-            << getCoreIPC(sstate1, sstate2) << ","
-            << 100. * (getCoreIPC(sstate1, sstate2) / double(m->getMaxIPC())) << ","
-            << getTotalExecUsage(sstate1, sstate2) << ","
-            << 100. * (getTotalExecUsage(sstate1, sstate2) / double(m->getMaxIPC())) << ",";
+             << float_format(getCycles(sstate1, sstate2)) << ","
+             << float_format(getInvariantTSC(cstates1[0], cstates2[0])) << ","
+             << getCoreIPC(sstate1, sstate2) << ","
+             << 100. * (getCoreIPC(sstate1, sstate2) / double(m->getMaxIPC())) << ","
+             << getTotalExecUsage(sstate1, sstate2) << ","
+             << 100. * (getTotalExecUsage(sstate1, sstate2) / double(m->getMaxIPC())) << ",";
 
-        if (m->getNumSockets() > 1) { // QPI info only for multi socket systems
+        if (m->getNumSockets() > 1)
+        { // QPI info only for multi socket systems
             if (m->incomingQPITrafficMetricsAvailable())
-               cout << float_format(getAllIncomingQPILinkBytes(sstate1, sstate2)) << ","
-                    << getQPItoMCTrafficRatio(sstate1, sstate2) << ",";
+                cout << float_format(getAllIncomingQPILinkBytes(sstate1, sstate2)) << ","
+                     << getQPItoMCTrafficRatio(sstate1, sstate2) << ",";
             if (m->outgoingQPITrafficMetricsAvailable())
-               cout << float_format(getAllOutgoingQPILinkBytes(sstate1, sstate2)) << ",";
+                cout << float_format(getAllOutgoingQPILinkBytes(sstate1, sstate2)) << ",";
         }
 
         for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-        if (m->isCoreCStateResidencySupported(s))
-            cout << getCoreCStateResidency(s, sstate1, sstate2) * 100 << ",";
+            if (m->isCoreCStateResidencySupported(s))
+                cout << getCoreCStateResidency(s, sstate1, sstate2) * 100 << ",";
 
         for (int s = 0; s <= PCM::MAX_C_STATE; ++s)
-        if (m->isPackageCStateResidencySupported(s))
-            cout << getPackageCStateResidency(s, sstate1, sstate2) * 100 << ",";
+            if (m->isPackageCStateResidencySupported(s))
+                cout << getPackageCStateResidency(s, sstate1, sstate2) * 100 << ",";
 
         if (m->packageEnergyMetricsAvailable())
             cout << getConsumedJoules(sstate1, sstate2) << ",";
@@ -955,16 +956,13 @@ void print_csv(PCM * m,
             print_basic_metrics_csv(m, sktstate1[i], sktstate2[i], false);
             print_other_metrics_csv(m, sktstate1[i], sktstate2[i]);
             if (m->memoryTrafficMetricsAvailable())
-                cout << ',' << getBytesReadFromMC(sktstate1[i], sktstate2[i]) / double(1e9) <<
-                    ',' << getBytesWrittenToMC(sktstate1[i], sktstate2[i]) / double(1e9);
+                cout << ',' << getBytesReadFromMC(sktstate1[i], sktstate2[i]) / double(1e9) << ',' << getBytesWrittenToMC(sktstate1[i], sktstate2[i]) / double(1e9);
             if (m->localMemoryRequestRatioMetricAvailable())
                 cout << ',' << int(100. * getLocalMemoryRequestRatio(sktstate1[i], sktstate2[i]));
             if (m->PMMTrafficMetricsAvailable())
-                cout << ',' << getBytesReadFromPMM(sktstate1[i], sktstate2[i]) / double(1e9) <<
-                ',' << getBytesWrittenToPMM(sktstate1[i], sktstate2[i]) / double(1e9);
+                cout << ',' << getBytesReadFromPMM(sktstate1[i], sktstate2[i]) / double(1e9) << ',' << getBytesWrittenToPMM(sktstate1[i], sktstate2[i]) / double(1e9);
             if (m->MCDRAMmemoryTrafficMetricsAvailable())
-                cout << ',' << getBytesReadFromEDC(sktstate1[i], sktstate2[i]) / double(1e9) <<
-                ',' << getBytesWrittenToEDC(sktstate1[i], sktstate2[i]) / double(1e9);
+                cout << ',' << getBytesReadFromEDC(sktstate1[i], sktstate2[i]) / double(1e9) << ',' << getBytesWrittenToEDC(sktstate1[i], sktstate2[i]) / double(1e9);
             cout << ',' << temp_format(sktstate2[i].getThermalHeadroom()) << ',';
         }
 
@@ -1045,20 +1043,20 @@ void print_csv(PCM * m,
     }
 }
 
-void application_profiling_phase(PCM * m)
+void application_profiling_phase(PCM *m)
 {
     CoreCounterState cstates1, cstates2;
     // pqos -e "llc:1=0x000f"
-    for(auto &&app : appList)
+    for (auto &&app : appList)
     {
         cstates1 = m->getCoreCounterState(app->cpu_core);
         system("pqos -e \"llc:1=0xfffff\";");
         system( ("pqos -a \"llc:1=" + to_string(app->cpu_core() +  "\";").c_str() );
         cout << "Running app with all ways" << endl;
-        
+
         MySleepMs(10000);
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        int IPCfull = getIPC(cstates1[app->cpu_core] , cstates2[app->cpu_core]);
+        int IPCfull = getIPC(cstates1 , cstates2);
         cout << "IPC with full ways : " << IPCfull << endl;
 
         system("pqos -e \"llc:1=0x00003\";");
@@ -1067,9 +1065,8 @@ void application_profiling_phase(PCM * m)
 
         MySleepMs(10000);
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        int IPClow = getIPC(cstates1[app->cpu_core],cstates2[app->cpu_core]);
+        int IPClow = getIPC(cstates1,cstates2);
         cout << "IPC with 2 ways : " << IPClow << endl;
-
     }
 }
 
@@ -1078,14 +1075,13 @@ void application_profiling_phase(PCM * m)
 void initiate_copart_apps()
 {
     system("docker start dc-server");
-    struct app *app = (struct app *) malloc(sizeof(struct app));
+    struct app *app = (struct app *)malloc(sizeof(struct app));
     app->cpu_core = 0;
     appList.insert(app);
     cout << "Current app count: " << appList.size() << endl;
 }
 
-
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     set_signal_handlers();
 
@@ -1098,7 +1094,7 @@ int main(int argc, char * argv[])
     cerr << "\n";
     cerr << " Processor Counter Monitor " << PCM_VERSION << "\n";
     cerr << "\n";
-    
+
     cerr << "\n";
 
     // if delay is not specified: use either default (1 second),
@@ -1113,206 +1109,201 @@ int main(int argc, char * argv[])
     bool show_system_output = true;
     bool csv_output = false;
     bool reset_pmu = false;
-    bool copart_output = false;  
+    bool copart_output = false;
     bool allow_multiple_instances = false;
     bool disable_JKT_workaround = false; // as per http://software.intel.com/en-us/articles/performance-impact-when-sampling-certain-llc-events-on-snb-ep-with-vtune
 
-    long diff_usec = 0; // deviation of clock is useconds between measurements
+    long diff_usec = 0;                            // deviation of clock is useconds between measurements
     int calibrated = PCM_CALIBRATION_INTERVAL - 2; // keeps track is the clock calibration needed
-    unsigned int numberOfIterations = 0; // number of iterations
+    unsigned int numberOfIterations = 0;           // number of iterations
     std::bitset<MAX_CORES> ycores;
     string program = string(argv[0]);
 
-    PCM * m = PCM::getInstance();
+    PCM *m = PCM::getInstance();
 
-    if (argc > 1) do
-    {
-        argv++;
-        argc--;
-        if (strncmp(*argv, "--help", 6) == 0 ||
-            strncmp(*argv, "-h", 2) == 0 ||
-            strncmp(*argv, "/h", 2) == 0)
-        {
-            print_help(program);
-            exit(EXIT_FAILURE);
-        }
-        else
-        if (strncmp(*argv, "--yescores", 10) == 0 ||
-            strncmp(*argv, "-yc", 3) == 0 ||
-            strncmp(*argv, "/yc", 3) == 0)
+    if (argc > 1)
+        do
         {
             argv++;
             argc--;
-            show_partial_core_output = true;
-            if(*argv == NULL)
+            if (strncmp(*argv, "--help", 6) == 0 ||
+                strncmp(*argv, "-h", 2) == 0 ||
+                strncmp(*argv, "/h", 2) == 0)
             {
-                cerr << "Error: --yescores requires additional argument.\n";
-                exit(EXIT_FAILURE);
-            }
-            std::stringstream ss(*argv);
-            while(ss.good())
-            {
-                string s;
-                int core_id;
-                std::getline(ss, s, ',');
-                if(s.empty())
-                    continue;
-                core_id = atoi(s.c_str());
-                if(core_id > MAX_CORES)
-                {
-                    cerr << "Core ID:" << core_id << " exceed maximum range " << MAX_CORES << ", program abort\n";
-                    exit(EXIT_FAILURE);
-                }
-
-                ycores.set(core_id, true);
-            }
-            if(m->getNumCores() > MAX_CORES)
-            {
-                cerr << "Error: --yescores option is enabled, but #define MAX_CORES " << MAX_CORES << " is less than  m->getNumCores() = " << m->getNumCores() << "\n";
-                cerr << "There is a potential to crash the system. Please increase MAX_CORES to at least " << m->getNumCores() << " and re-enable this option.\n";
-                exit(EXIT_FAILURE);
-            }
-            continue;
-        }
-        if (strncmp(*argv, "--nocores", 9) == 0 ||
-            strncmp(*argv, "-nc", 3) == 0 ||
-            strncmp(*argv, "/nc", 3) == 0)
-        {
-            show_core_output = false;
-            continue;
-        }
-        else
-        if (strncmp(*argv, "--nosockets", 11) == 0 ||
-            strncmp(*argv, "-ns", 3) == 0 ||
-            strncmp(*argv, "/ns", 3) == 0)
-        {
-            show_socket_output = false;
-            continue;
-        }
-        else
-        if (strncmp(*argv, "--nosystem", 10) == 0 ||
-            strncmp(*argv, "-nsys", 5) == 0 ||
-            strncmp(*argv, "/nsys", 5) == 0)
-        {
-            show_system_output = false;
-            continue;
-        }
-        else
-        if (strncmp(*argv, "--multiple-instances", 20) == 0 ||
-            strncmp(*argv, "-m", 2) == 0 ||
-            strncmp(*argv, "/m", 2) == 0)
-        {
-            allow_multiple_instances = true;
-            continue;
-        }
-        else
-        if (strncmp(*argv, "-csv", 4) == 0 ||
-            strncmp(*argv, "/csv", 4) == 0)
-        {
-            csv_output = true;
-            string cmd = string(*argv);
-            size_t found = cmd.find('=', 4);
-            if (found != string::npos) {
-                string filename = cmd.substr(found + 1);
-                if (!filename.empty()) {
-                    m->setOutput(filename);
-                }
-            }
-            continue;
-        }
-        else
-        if (strncmp(*argv, "--copart", 8) == 0 ||
-            strncmp(*argv, "/copart", 7) == 0)
-        {
-            initiate_copart_apps();
-            cerr << "Copart activated" << endl;
-            copart_output = true;
-            continue;
-        }
-        else
-        if (strncmp(*argv, "-i", 2) == 0 ||
-            strncmp(*argv, "/i", 2) == 0)
-        {
-            string cmd = string(*argv);
-            size_t found = cmd.find('=', 2);
-            if (found != string::npos) {
-                string tmp = cmd.substr(found + 1);
-                if (!tmp.empty()) {
-                    numberOfIterations = (unsigned int)atoi(tmp.c_str());
-                }
-            }
-            continue;
-        }
-        else
-        if (strncmp(*argv, "-reset", 6) == 0 ||
-            strncmp(*argv, "-r", 2) == 0 ||
-            strncmp(*argv, "/reset", 6) == 0)
-        {
-            reset_pmu = true;
-            continue;
-        }
-        else
-        if (CheckAndForceRTMAbortMode(*argv, m))
-        {
-            continue;
-        }
-        else
-        if (strncmp(*argv, "--noJKTWA", 9) == 0)
-        {
-            disable_JKT_workaround = true;
-            continue;
-        }
-#ifdef _MSC_VER
-        else
-        if (strncmp(*argv, "--uninstallDriver", 17) == 0)
-        {
-            Driver tmpDrvObject;
-            tmpDrvObject.uninstall();
-            cerr << "msr.sys driver has been uninstalled. You might need to reboot the system to make this effective.\n";
-            exit(EXIT_SUCCESS);
-        }
-        else
-        if (strncmp(*argv, "--installDriver", 15) == 0)
-        {
-            Driver tmpDrvObject = Driver(Driver::msrLocalPath());
-            if (!tmpDrvObject.start())
-            {
-                wcerr << "Can not access CPU counters\n";
-                wcerr << "You must have a signed  driver at " << tmpDrvObject.driverPath() << " and have administrator rights to run this program\n";
-                exit(EXIT_FAILURE);
-            }
-            exit(EXIT_SUCCESS);
-        }
-#endif
-        else
-        if (strncmp(*argv, "--", 2) == 0)
-        {
-            argv++;
-            sysCmd = *argv;
-            sysArgv = argv;
-            break;
-        }
-        else
-        {
-            // any other options positional that is a floating point number is treated as <delay>,
-            // while the other options are ignored with a warning issues to stderr
-            double delay_input;
-            std::istringstream is_str_stream(*argv);
-            is_str_stream >> noskipws >> delay_input;
-            if (is_str_stream.eof() && !is_str_stream.fail() && delay == -1) {
-                delay = delay_input;
-                cerr << "Delay: " << delay << "\n";
-            }
-            else {
-                cerr << "WARNING: unknown command-line option: \"" << *argv << "\". Ignoring it.\n";
                 print_help(program);
                 exit(EXIT_FAILURE);
             }
-            continue;
-        }
-    } while (argc > 1); // end of command line partsing loop
+            else if (strncmp(*argv, "--yescores", 10) == 0 ||
+                     strncmp(*argv, "-yc", 3) == 0 ||
+                     strncmp(*argv, "/yc", 3) == 0)
+            {
+                argv++;
+                argc--;
+                show_partial_core_output = true;
+                if (*argv == NULL)
+                {
+                    cerr << "Error: --yescores requires additional argument.\n";
+                    exit(EXIT_FAILURE);
+                }
+                std::stringstream ss(*argv);
+                while (ss.good())
+                {
+                    string s;
+                    int core_id;
+                    std::getline(ss, s, ',');
+                    if (s.empty())
+                        continue;
+                    core_id = atoi(s.c_str());
+                    if (core_id > MAX_CORES)
+                    {
+                        cerr << "Core ID:" << core_id << " exceed maximum range " << MAX_CORES << ", program abort\n";
+                        exit(EXIT_FAILURE);
+                    }
 
-    if (disable_JKT_workaround) m->disableJKTWorkaround();
+                    ycores.set(core_id, true);
+                }
+                if (m->getNumCores() > MAX_CORES)
+                {
+                    cerr << "Error: --yescores option is enabled, but #define MAX_CORES " << MAX_CORES << " is less than  m->getNumCores() = " << m->getNumCores() << "\n";
+                    cerr << "There is a potential to crash the system. Please increase MAX_CORES to at least " << m->getNumCores() << " and re-enable this option.\n";
+                    exit(EXIT_FAILURE);
+                }
+                continue;
+            }
+            if (strncmp(*argv, "--nocores", 9) == 0 ||
+                strncmp(*argv, "-nc", 3) == 0 ||
+                strncmp(*argv, "/nc", 3) == 0)
+            {
+                show_core_output = false;
+                continue;
+            }
+            else if (strncmp(*argv, "--nosockets", 11) == 0 ||
+                     strncmp(*argv, "-ns", 3) == 0 ||
+                     strncmp(*argv, "/ns", 3) == 0)
+            {
+                show_socket_output = false;
+                continue;
+            }
+            else if (strncmp(*argv, "--nosystem", 10) == 0 ||
+                     strncmp(*argv, "-nsys", 5) == 0 ||
+                     strncmp(*argv, "/nsys", 5) == 0)
+            {
+                show_system_output = false;
+                continue;
+            }
+            else if (strncmp(*argv, "--multiple-instances", 20) == 0 ||
+                     strncmp(*argv, "-m", 2) == 0 ||
+                     strncmp(*argv, "/m", 2) == 0)
+            {
+                allow_multiple_instances = true;
+                continue;
+            }
+            else if (strncmp(*argv, "-csv", 4) == 0 ||
+                     strncmp(*argv, "/csv", 4) == 0)
+            {
+                csv_output = true;
+                string cmd = string(*argv);
+                size_t found = cmd.find('=', 4);
+                if (found != string::npos)
+                {
+                    string filename = cmd.substr(found + 1);
+                    if (!filename.empty())
+                    {
+                        m->setOutput(filename);
+                    }
+                }
+                continue;
+            }
+            else if (strncmp(*argv, "--copart", 8) == 0 ||
+                     strncmp(*argv, "/copart", 7) == 0)
+            {
+                initiate_copart_apps();
+                cerr << "Copart activated" << endl;
+                copart_output = true;
+                continue;
+            }
+            else if (strncmp(*argv, "-i", 2) == 0 ||
+                     strncmp(*argv, "/i", 2) == 0)
+            {
+                string cmd = string(*argv);
+                size_t found = cmd.find('=', 2);
+                if (found != string::npos)
+                {
+                    string tmp = cmd.substr(found + 1);
+                    if (!tmp.empty())
+                    {
+                        numberOfIterations = (unsigned int)atoi(tmp.c_str());
+                    }
+                }
+                continue;
+            }
+            else if (strncmp(*argv, "-reset", 6) == 0 ||
+                     strncmp(*argv, "-r", 2) == 0 ||
+                     strncmp(*argv, "/reset", 6) == 0)
+            {
+                reset_pmu = true;
+                continue;
+            }
+            else if (CheckAndForceRTMAbortMode(*argv, m))
+            {
+                continue;
+            }
+            else if (strncmp(*argv, "--noJKTWA", 9) == 0)
+            {
+                disable_JKT_workaround = true;
+                continue;
+            }
+#ifdef _MSC_VER
+            else if (strncmp(*argv, "--uninstallDriver", 17) == 0)
+            {
+                Driver tmpDrvObject;
+                tmpDrvObject.uninstall();
+                cerr << "msr.sys driver has been uninstalled. You might need to reboot the system to make this effective.\n";
+                exit(EXIT_SUCCESS);
+            }
+            else if (strncmp(*argv, "--installDriver", 15) == 0)
+            {
+                Driver tmpDrvObject = Driver(Driver::msrLocalPath());
+                if (!tmpDrvObject.start())
+                {
+                    wcerr << "Can not access CPU counters\n";
+                    wcerr << "You must have a signed  driver at " << tmpDrvObject.driverPath() << " and have administrator rights to run this program\n";
+                    exit(EXIT_FAILURE);
+                }
+                exit(EXIT_SUCCESS);
+            }
+#endif
+            else if (strncmp(*argv, "--", 2) == 0)
+            {
+                argv++;
+                sysCmd = *argv;
+                sysArgv = argv;
+                break;
+            }
+            else
+            {
+                // any other options positional that is a floating point number is treated as <delay>,
+                // while the other options are ignored with a warning issues to stderr
+                double delay_input;
+                std::istringstream is_str_stream(*argv);
+                is_str_stream >> noskipws >> delay_input;
+                if (is_str_stream.eof() && !is_str_stream.fail() && delay == -1)
+                {
+                    delay = delay_input;
+                    cerr << "Delay: " << delay << "\n";
+                }
+                else
+                {
+                    cerr << "WARNING: unknown command-line option: \"" << *argv << "\". Ignoring it.\n";
+                    print_help(program);
+                    exit(EXIT_FAILURE);
+                }
+                continue;
+            }
+        } while (argc > 1); // end of command line partsing loop
+
+    if (disable_JKT_workaround)
+        m->disableJKTWorkaround();
 
     if (reset_pmu)
     {
@@ -1353,25 +1344,30 @@ int main(int argc, char * argv[])
     uint64 TimeAfterSleep = 0;
     PCM_UNUSED(TimeAfterSleep);
 
-    if ((sysCmd != NULL) && (delay <= 0.0)) {
+    if ((sysCmd != NULL) && (delay <= 0.0))
+    {
         // in case external command is provided in command line, and
         // delay either not provided (-1) or is zero
         m->setBlocked(true);
     }
-    else {
+    else
+    {
         m->setBlocked(false);
     }
     // in case delay is not provided in command line => set default
-    if (delay <= 0.0) delay = PCM_DELAY_DEFAULT;
+    if (delay <= 0.0)
+        delay = PCM_DELAY_DEFAULT;
     // cerr << "DEBUG: Delay: " << delay << " seconds. Blocked: " << m->isBlocked() << "\n";
 
-    if (csv_output) {
+    if (csv_output)
+    {
         print_csv_header(m, ycores, cpu_model, show_core_output, show_partial_core_output, show_socket_output, show_system_output);
     }
 
     m->getAllCounterStates(sstate1, sktstate1, cstates1);
 
-    if (sysCmd != NULL) {
+    if (sysCmd != NULL)
+    {
         MySystem(sysCmd, sysArgv);
     }
 
@@ -1379,20 +1375,24 @@ int main(int argc, char * argv[])
 
     while ((i <= numberOfIterations) || (numberOfIterations == 0))
     {
-        if (!csv_output) cout << std::flush;
+        if (!csv_output)
+            cout << std::flush;
         int delay_ms = int(delay * 1000);
         int calibrated_delay_ms = delay_ms;
 #ifdef _MSC_VER
         // compensate slow Windows console output
-        if (TimeAfterSleep) delay_ms -= (uint32)(m->getTickCount() - TimeAfterSleep);
-        if (delay_ms < 0) delay_ms = 0;
+        if (TimeAfterSleep)
+            delay_ms -= (uint32)(m->getTickCount() - TimeAfterSleep);
+        if (delay_ms < 0)
+            delay_ms = 0;
 #else
         // compensation of delay on Linux/UNIX
         // to make the sampling interval as monotone as possible
         struct timeval start_ts, end_ts;
-        if (calibrated == 0) {
+        if (calibrated == 0)
+        {
             gettimeofday(&end_ts, NULL);
-            diff_usec = (end_ts.tv_sec - start_ts.tv_sec)*1000000.0 + (end_ts.tv_usec - start_ts.tv_usec);
+            diff_usec = (end_ts.tv_sec - start_ts.tv_sec) * 1000000.0 + (end_ts.tv_usec - start_ts.tv_usec);
             calibrated_delay_ms = delay_ms - diff_usec / 1000.0;
         }
 #endif
@@ -1404,7 +1404,8 @@ int main(int argc, char * argv[])
 
 #ifndef _MSC_VER
         calibrated = (calibrated + 1) % PCM_CALIBRATION_INTERVAL;
-        if (calibrated == 0) {
+        if (calibrated == 0)
+        {
             gettimeofday(&start_ts, NULL);
         }
 #endif
@@ -1424,13 +1425,13 @@ int main(int argc, char * argv[])
             //cout << cstates1.size();
             cout << "Running Profiling Phase" << endl;
             application_profiling_phase(m);
-            
+
             // if (m->isL3CacheHitRatioAvailable())
             //     cout << "Hit Ratio : " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0])) << endl;
             // cout << float_format(getL3CacheMisses(cstates1[0], cstates2[0])) << "  ";
             // cout << unit_format(getL3CacheMisses(cstates1[0], cstates2[0])) << endl << endl;
-            
-            //cout << unit_format(getL3CacheMisses(sstate1, sstate2)); 
+
+            //cout << unit_format(getL3CacheMisses(sstate1, sstate2));
         }
 
         // sanity checks
@@ -1442,11 +1443,13 @@ int main(int argc, char * argv[])
         else
         {
             assert(getNumberOfCustomEvents(0, sstate1, sstate2) == getL3CacheMisses(sstate1, sstate2));
-            if (m->useSkylakeEvents()) {
+            if (m->useSkylakeEvents())
+            {
                 assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL3CacheHits(sstate1, sstate2));
                 assert(getNumberOfCustomEvents(2, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2));
             }
-            else {
+            else
+            {
                 assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL3CacheHitsNoSnoop(sstate1, sstate2));
                 assert(getNumberOfCustomEvents(2, sstate1, sstate2) == getL3CacheHitsSnoop(sstate1, sstate2));
             }
@@ -1457,7 +1460,8 @@ int main(int argc, char * argv[])
         std::swap(sktstate1, sktstate2);
         std::swap(cstates1, cstates2);
 
-        if (m->isBlocked()) {
+        if (m->isBlocked())
+        {
             // in case PCM was blocked after spawning child application: break monitoring loop here
             break;
         }
