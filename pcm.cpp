@@ -1049,15 +1049,15 @@ void application_profiling_phase(PCM * m)
 {
     std::vector<CoreCounterState> cstates1, cstates2;
     // pqos -e "llc:1=0x000f"
-    for(const &&app : appList)
+    for(auto &&app : appList)
     {
-        m->getCoreCounterState(cstates1)
+        cstates1 = m->getCoreCounterState(app->cpu_core);
         system("pqos -e \"llc:1=0xfffff\";");
         system("pqos -a \"llc:1=" << app->cpu_core <<  "\";");
         cout << "Running app with all ways" << endl;
         
         MySleepMs(10000);
-        m->getCoreCounterState(cstates2);
+        cstates2 = m->getCoreCounterState(app->cpu_core);
         int IPCfull = getIPC(cstates1[app->cpu_core] , cstates2[app->cpu_core]);
         cout << "IPC with full ways : " << IPCfull << endl;
 
@@ -1066,7 +1066,7 @@ void application_profiling_phase(PCM * m)
         std::swap(cstates1,cstates2);
 
         MySleepMs(10000);
-        m->getCoreCounterState(cstates2);
+        cstates2 = m->getCoreCounterState(app->cpu_core);
         int IPClow = getIPC(cstates1[app->cpu_core],cstates2[app->cpu_core]);
         cout << "IPC with 2 ways : " << IPClow << endl;
 
