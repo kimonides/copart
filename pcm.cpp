@@ -1051,21 +1051,22 @@ void application_profiling_phase(PCM *m)
     {
         cstates1 = m->getCoreCounterState(app->cpu_core);
         system("pqos -e \"llc:1=0xfffff\";");
-        system( ("pqos -a \"llc:1=" + to_string(app->cpu_core() +  "\";").c_str() );
+        const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
+        system(command);
         cout << "Running app with all ways" << endl;
 
         MySleepMs(10000);
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        int IPCfull = getIPC(cstates1 , cstates2);
+        int IPCfull = getIPC(cstates1, cstates2);
         cout << "IPC with full ways : " << IPCfull << endl;
 
         system("pqos -e \"llc:1=0x00003\";");
         cout << "Running app with 2 ways" << endl;
-        std::swap(cstates1,cstates2);
+        std::swap(cstates1, cstates2);
 
         MySleepMs(10000);
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        int IPClow = getIPC(cstates1,cstates2);
+        int IPClow = getIPC(cstates1, cstates2);
         cout << "IPC with 2 ways : " << IPClow << endl;
     }
 }
