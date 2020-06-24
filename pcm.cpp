@@ -1054,6 +1054,7 @@ void application_profiling_phase(PCM *m)
     //Must add running with mba also when I will change server
     for (auto &&app : appList)
     {
+        double IPCfull , IPC_low_ways , IPC_low_bw;
         system("pqos -a \"llc:1=0;\" > nul");
         while (true)
         {   
@@ -1068,7 +1069,7 @@ void application_profiling_phase(PCM *m)
             MySleepMs(WAIT_TIME);
 
             cstates2 = m->getCoreCounterState(app->cpu_core);
-            double IPCfull = getIPC(cstates1, cstates2);
+            IPCfull = getIPC(cstates1, cstates2);
             
             cout << "IPC with full ways : " << IPCfull << endl;
             if (m->isL3CacheHitRatioAvailable())
@@ -1082,9 +1083,9 @@ void application_profiling_phase(PCM *m)
             MySleepMs(WAIT_TIME);
 
             cstates2 = m->getCoreCounterState(app->cpu_core);
-            double IPC_low_ways = getIPC(cstates1, cstates2);
+            IPC_low_ways = getIPC(cstates1, cstates2);
             
-            cout << "IPC with 2 ways : " << IPClow << endl;
+            //cout << "IPC with 2 ways : " << IPC_low << endl;
             if (m->isL3CacheHitRatioAvailable())
                 cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
 
@@ -1100,7 +1101,7 @@ void application_profiling_phase(PCM *m)
 
 
             app->IPCfull = IPCfull;
-            cout << "IPC fell by : " << (IPCfull-IPClow)/IPCfull << endl << endl << endl;
+            //cout << "IPC fell by : " << (IPCfull-IPClow)/IPCfull << endl << endl << endl;
             
             
             // if(  (IPCfull-IPC_low_ways)/IPCfull > 0.1 )
