@@ -1047,13 +1047,13 @@ void print_csv(PCM * m,
 
 void application_profiling_phase(PCM * m)
 {
-    std::vector<CoreCounterState> cstates1, cstates2;
+    CoreCounterState cstates1, cstates2;
     // pqos -e "llc:1=0x000f"
     for(auto &&app : appList)
     {
         cstates1 = m->getCoreCounterState(app->cpu_core);
         system("pqos -e \"llc:1=0xfffff\";");
-        system("pqos -a \"llc:1=" << app->cpu_core <<  "\";");
+        system( ("pqos -a \"llc:1=" + app->cpu_core +  "\";").c_str() );
         cout << "Running app with all ways" << endl;
         
         MySleepMs(10000);
