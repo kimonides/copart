@@ -1045,7 +1045,7 @@ void print_csv(PCM *m,
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define WAIT_TIME
+#define WAIT_TIME 10000
 void application_profiling_phase(PCM *m)
 {
     cout << endl << endl << endl << endl << "Application Profiling Phase" << endl << endl << endl;
