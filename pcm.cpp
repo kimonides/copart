@@ -1422,9 +1422,11 @@ int main(int argc, char * argv[])
         if (copart_output)
         {
             //cout << cstates1.size();
+            cout << "Running Profiling Phase" << endl;
+            application_profiling_phase(m);
             
-            if (m->isL3CacheHitRatioAvailable())
-                cout << "Hit Ratio : " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0])) << endl;
+            // if (m->isL3CacheHitRatioAvailable())
+            //     cout << "Hit Ratio : " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0])) << endl;
             // cout << float_format(getL3CacheMisses(cstates1[0], cstates2[0])) << "  ";
             // cout << unit_format(getL3CacheMisses(cstates1[0], cstates2[0])) << endl << endl;
             
