@@ -1064,6 +1064,8 @@ void application_profiling_phase(PCM *m)
             cstates2 = m->getCoreCounterState(app->cpu_core);
             double IPCfull = getIPC(cstates1, cstates2);
             cout << "IPC with full ways : " << IPCfull << endl;
+            if (m->isL3CacheHitRatioAvailable())
+                cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
 
             std::swap(cstates1,cstates2);
 
@@ -1072,8 +1074,11 @@ void application_profiling_phase(PCM *m)
             cstates2 = m->getCoreCounterState(app->cpu_core);
             double IPClow = getIPC(cstates1, cstates2);
             cout << "IPC with 2 ways : " << IPClow << endl;
+            if (m->isL3CacheHitRatioAvailable())
+                cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
 
-            app->IPCfull = IPCfull;
+
+            // app->IPCfull = IPCfull;
             cout << (IPCfull-IPClow)/IPCfull << endl << endl << endl << endl;
             
             // if(  (IPCfull-IPClow)/IPCfull > 0.1 )
