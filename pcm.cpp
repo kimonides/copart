@@ -1053,7 +1053,7 @@ void application_profiling_phase(PCM * m)
     {
         cstates1 = m->getCoreCounterState(app->cpu_core);
         system("pqos -e \"llc:1=0xfffff\";");
-        system( ("pqos -a \"llc:1=" + app->cpu_core +  "\";").c_str() );
+        system( ("pqos -a \"llc:1=" + to_string(app->cpu_core() +  "\";").c_str() );
         cout << "Running app with all ways" << endl;
         
         MySleepMs(10000);
