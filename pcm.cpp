@@ -1051,26 +1051,26 @@ void application_profiling_phase(PCM *m)
     CoreCounterState cstates1, cstates2;
     for (auto &&app : appList)
     {
-        const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
-        system(command);
-        cout << "Set app to COS 1" << endl;
+        //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
+        system("pqos -a \"llc:1=0;\"");
+        cout << "Set core 0 to COS 1" << endl;
 
         cstates1 = m->getCoreCounterState(app->cpu_core);
-        system("pqos -e \"llc:1=0xfffff\";");
+        system("pqos -e \"llc:1=0xfffff;\"");
         cout << "Running app with all ways" << endl;
 
         MySleepMs(10000);
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        int IPCfull = getIPC(cstates1, cstates2);
+        double IPCfull = getIPC(cstates1, cstates2);
         cout << "IPC with full ways : " << IPCfull << endl;
 
-        system("pqos -e \"llc:1=0x00003\";");
+        system("pqos -e \"llc:1=0x00003;\"");
         cout << "Running app with 2 ways" << endl;
         std::swap(cstates1, cstates2);
 
         MySleepMs(10000);
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        int IPClow = getIPC(cstates1, cstates2);
+        double IPClow = getIPC(cstates1, cstates2);
         cout << "IPC with 2 ways : " << IPClow << endl;
     }
 }
