@@ -1045,6 +1045,7 @@ void print_csv(PCM *m,
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define WAIT_TIME
 void application_profiling_phase(PCM *m)
 {
     cout << endl << endl << endl << endl << "Application Profiling Phase" << endl << endl << endl;
@@ -1053,42 +1054,71 @@ void application_profiling_phase(PCM *m)
     //Must add running with mba also when I will change server
     for (auto &&app : appList)
     {
-        system("pqos -a \"llc:1=0-3;\" > nul");
+        system("pqos -a \"llc:1=0;\" > nul");
         while (true)
         {   
-            //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
+            const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
+            cout << command << endl ;
+            exit(0);
             cstates1 = m->getCoreCounterState(app->cpu_core);
 
+            //Give all ways and all memory bandwidth to the application
             system("pqos -e \"llc:1=0xfffff;\" > nul");
-            MySleepMs(10000);
+            system("pqos -e \"mba:1=100;\"");
+            MySleepMs(WAIT_TIME);
+
             cstates2 = m->getCoreCounterState(app->cpu_core);
             double IPCfull = getIPC(cstates1, cstates2);
+            
             cout << "IPC with full ways : " << IPCfull << endl;
             if (m->isL3CacheHitRatioAvailable())
                 cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
 
             std::swap(cstates1,cstates2);
 
+            //Give only 2 ways and all memory bandwidth
             system("pqos -e \"llc:1=0x00003;\" > nul");
-            MySleepMs(10000);
+            system("pqos -e \"mba:1=100;\" > nul");
+            MySleepMs(WAIT_TIME);
+
             cstates2 = m->getCoreCounterState(app->cpu_core);
-            double IPClow = getIPC(cstates1, cstates2);
+            double IPC_low_ways = getIPC(cstates1, cstates2);
+            
             cout << "IPC with 2 ways : " << IPClow << endl;
             if (m->isL3CacheHitRatioAvailable())
                 cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
 
+            std::swap(cstates1,cstates2);
 
-            // app->IPCfull = IPCfull;
+            //Give all ways and 20% memory bandwidth
+            system("pqos -e \"llc:1=0xfffff;\" > nul");
+            system("pqos -e \"mba:1=20;\" > nul");
+            MySleepMs(WAIT_TIME);
+
+            cstates2 = m->getCoreCounterState(app->cpu_core);
+            double IPC_low_bw = getIPC(cstates1,cstates2);
+
+
+            app->IPCfull = IPCfull;
             cout << "IPC fell by : " << (IPCfull-IPClow)/IPCfull << endl << endl << endl;
             
-            // if(  (IPCfull-IPClow)/IPCfull > 0.1 )
+            
+            // if(  (IPCfull-IPC_low_ways)/IPCfull > 0.1 )
             // {
-            //     cout << "DEMAND STATE" << endl ;
+            //     cout << "LLC DEMAND STATE" << endl ;
             //     app->state=consumer;
             //     app->preference=LLC;
             // }
+            // if(  (IPCfull-IPC_low_bw)/IPCfull > 0.1 )
+            // {
+            //     cout << "Bandwidth DEMAND STATE" << endl ;
+            //     app->state=consumer;
+            //     if(app->preference==LLC) 
+            //         app->preference = ANY;
+            //     else
+            //         app->preference=LLC;
+            // }
 
-            //std::swap(cstates1,cstates2);
         }
     }
 }
