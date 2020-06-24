@@ -1058,6 +1058,8 @@ void application_profiling_phase(PCM *m)
         system("pqos -a \"llc:1=0;\" > nul");
         while (true)
         {   
+            string cmd = "pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";" ; 
+            cout << cmd << endl ;
             const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
             cout << command << endl ;
             exit(0);
