@@ -36,7 +36,8 @@ struct app
     int resource[2];
     enum state_type state;
     enum resource_type preference;
-    float slowdown;
+    double slowdown;
+    double IPCfull;
 
     bool operator<(const app &app) const
     {

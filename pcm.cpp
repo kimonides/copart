@@ -1049,6 +1049,8 @@ void application_profiling_phase(PCM *m)
 {
     cout << endl << endl << endl << endl << "Application Profiling Phase" << endl << endl << endl;
     CoreCounterState cstates1, cstates2;
+    //TODO
+    //Must add running with mba also when I will change server
     for (auto &&app : appList)
     {
         //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
@@ -1072,6 +1074,15 @@ void application_profiling_phase(PCM *m)
         cstates2 = m->getCoreCounterState(app->cpu_core);
         double IPClow = getIPC(cstates1, cstates2);
         cout << "IPC with 2 ways : " << IPClow << endl;
+
+        app->IPCfull = IPCfull;
+        cout << (IPCfull-IPClow)/IPCfull << endl;
+        if(  (IPCfull-IPClow)/IPCfull > 0.1 )
+        {
+            cout << "DEMAND STATE" << endl ;
+            app->state=consumer;
+            app->preference=LLC;
+        }
     }
 }
 
