@@ -1053,7 +1053,7 @@ void application_profiling_phase(PCM *m)
     //Must add running with mba also when I will change server
     for (auto &&app : appList)
     {
-        system("pqos -a \"llc:1=0;\" > nul");
+        system("pqos -a \"llc:1=0-3;\" > nul");
         while (true)
         {   
             //const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
