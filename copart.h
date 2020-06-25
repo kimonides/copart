@@ -46,6 +46,7 @@ struct app
     {
         return (slowdown < app.slowdown);
     }
+
 };
 
 set<struct app *> appList;
@@ -252,7 +253,21 @@ void update_FSM( std::set<struct app *> appList , std::vector<CoreCounterState> 
 //     return true;
 // }
 
-set_system_state();
+void set_system_state()
+{
+
+}
+
+void initiate_copart_apps()
+{
+    system("docker start dc-server");
+    struct app *app = (struct app *)malloc(sizeof(struct app));
+    app->cpu_core = 0;
+    appList.insert(app);
+    cout << "Current app count: " << appList.size() << endl;
+}
+
+std::set<struct app*> clone()
 
 void exploreSystemStateSpace(PCM *m)
 {
@@ -260,8 +275,6 @@ void exploreSystemStateSpace(PCM *m)
     std::vector<CoreCounterState> cstates1, cstates2;
 
     m->getCoreCounterStates(cstates1);
-
-    //initialize_state(); //this should also set app states
 
     while (true)
     {
