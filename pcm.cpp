@@ -1298,7 +1298,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    print_cpu_details();
+    //print_cpu_details();
 
     std::vector<CoreCounterState> cstates1, cstates2;
     std::vector<SocketCounterState> sktstate1, sktstate2;
@@ -1322,10 +1322,10 @@ int main(int argc, char *argv[])
         delay = PCM_DELAY_DEFAULT;
     // cerr << "DEBUG: Delay: " << delay << " seconds. Blocked: " << m->isBlocked() << "\n";
 
-    if (csv_output)
-    {
-        print_csv_header(m, ycores, cpu_model, show_core_output, show_partial_core_output, show_socket_output, show_system_output);
-    }
+    // if (csv_output)
+    // {
+    //     print_csv_header(m, ycores, cpu_model, show_core_output, show_partial_core_output, show_socket_output, show_system_output);
+    // }
 
     m->getAllCounterStates(sstate1, sktstate1, cstates1);
 
@@ -1334,47 +1334,61 @@ int main(int argc, char *argv[])
         MySystem(sysCmd, sysArgv);
     }
 
-    unsigned int i = 1;
-
-    while ((i <= numberOfIterations) || (numberOfIterations == 0))
+    if(!copart_output)
     {
-        if (!csv_output)
-            cout << std::flush;
-        int delay_ms = int(delay * 1000);
-        int calibrated_delay_ms = delay_ms;
-#ifdef _MSC_VER
-        // compensate slow Windows console output
-        if (TimeAfterSleep)
-            delay_ms -= (uint32)(m->getTickCount() - TimeAfterSleep);
-        if (delay_ms < 0)
-            delay_ms = 0;
-#else
-        // compensation of delay on Linux/UNIX
-        // to make the sampling interval as monotone as possible
-        struct timeval start_ts, end_ts;
-        if (calibrated == 0)
-        {
-            gettimeofday(&end_ts, NULL);
-            diff_usec = (end_ts.tv_sec - start_ts.tv_sec) * 1000000.0 + (end_ts.tv_usec - start_ts.tv_usec);
-            calibrated_delay_ms = delay_ms - diff_usec / 1000.0;
-        }
-#endif
+        cout << "This version of PCM works only with CoPart" << endl;
+        exit(EXIT_FAILURE);
+    }
 
-        if (sysCmd == NULL || numberOfIterations != 0 || m->isBlocked() == false)
-        {
-            MySleepMs(calibrated_delay_ms);
-        }
+    //unsigned int i = 1;
 
-#ifndef _MSC_VER
-        calibrated = (calibrated + 1) % PCM_CALIBRATION_INTERVAL;
-        if (calibrated == 0)
-        {
-            gettimeofday(&start_ts, NULL);
-        }
-#endif
-        TimeAfterSleep = m->getTickCount();
+    while (true)
+    {
+            if (copart_output)
+            {
+                application_profiling_phase(m);
+                exploreSystemStateSpace(m);
+                idlePhase(m);
+            }
 
-        m->getAllCounterStates(sstate2, sktstate2, cstates2);
+
+//         if (!csv_output)
+//             cout << std::flush;
+//         int delay_ms = int(delay * 1000);
+//         int calibrated_delay_ms = delay_ms;
+// #ifdef _MSC_VER
+//         // compensate slow Windows console output
+//         if (TimeAfterSleep)
+//             delay_ms -= (uint32)(m->getTickCount() - TimeAfterSleep);
+//         if (delay_ms < 0)
+//             delay_ms = 0;
+// #else
+//         // compensation of delay on Linux/UNIX
+//         // to make the sampling interval as monotone as possible
+//         struct timeval start_ts, end_ts;
+//         if (calibrated == 0)
+//         {
+//             gettimeofday(&end_ts, NULL);
+//             diff_usec = (end_ts.tv_sec - start_ts.tv_sec) * 1000000.0 + (end_ts.tv_usec - start_ts.tv_usec);
+//             calibrated_delay_ms = delay_ms - diff_usec / 1000.0;
+//         }
+// #endif
+
+//         if (sysCmd == NULL || numberOfIterations != 0 || m->isBlocked() == false)
+//         {
+//             MySleepMs(calibrated_delay_ms);
+//         }
+
+// #ifndef _MSC_VER
+//         calibrated = (calibrated + 1) % PCM_CALIBRATION_INTERVAL;
+//         if (calibrated == 0)
+//         {
+//             gettimeofday(&start_ts, NULL);
+//         }
+// #endif
+//         TimeAfterSleep = m->getTickCount();
+
+//         m->getAllCounterStates(sstate2, sktstate2, cstates2);
 
         // if (csv_output)
         //     print_csv(m, cstates1, cstates2, sktstate1, sktstate2, ycores, sstate1, sstate2,
@@ -1383,44 +1397,40 @@ int main(int argc, char *argv[])
         //     print_output(m, cstates1, cstates2, sktstate1, sktstate2, ycores, sstate1, sstate2,
         //     cpu_model, show_core_output, show_partial_core_output, show_socket_output, show_system_output);
 
-        if (copart_output)
-        {
-            application_profiling_phase(m);
-        }
 
         // sanity checks
-        if (m->isAtom() || cpu_model == PCM::KNL)
-        {
-            assert(getNumberOfCustomEvents(0, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2));
-            assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2) + getL2CacheHits(sstate1, sstate2));
-        }
-        else
-        {
-            assert(getNumberOfCustomEvents(0, sstate1, sstate2) == getL3CacheMisses(sstate1, sstate2));
-            if (m->useSkylakeEvents())
-            {
-                assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL3CacheHits(sstate1, sstate2));
-                assert(getNumberOfCustomEvents(2, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2));
-            }
-            else
-            {
-                assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL3CacheHitsNoSnoop(sstate1, sstate2));
-                assert(getNumberOfCustomEvents(2, sstate1, sstate2) == getL3CacheHitsSnoop(sstate1, sstate2));
-            }
-            assert(getNumberOfCustomEvents(3, sstate1, sstate2) == getL2CacheHits(sstate1, sstate2));
-        }
+        // if (m->isAtom() || cpu_model == PCM::KNL)
+        // {
+        //     assert(getNumberOfCustomEvents(0, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2));
+        //     assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2) + getL2CacheHits(sstate1, sstate2));
+        // }
+        // else
+        // {
+        //     assert(getNumberOfCustomEvents(0, sstate1, sstate2) == getL3CacheMisses(sstate1, sstate2));
+        //     if (m->useSkylakeEvents())
+        //     {
+        //         assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL3CacheHits(sstate1, sstate2));
+        //         assert(getNumberOfCustomEvents(2, sstate1, sstate2) == getL2CacheMisses(sstate1, sstate2));
+        //     }
+        //     else
+        //     {
+        //         assert(getNumberOfCustomEvents(1, sstate1, sstate2) == getL3CacheHitsNoSnoop(sstate1, sstate2));
+        //         assert(getNumberOfCustomEvents(2, sstate1, sstate2) == getL3CacheHitsSnoop(sstate1, sstate2));
+        //     }
+        //     assert(getNumberOfCustomEvents(3, sstate1, sstate2) == getL2CacheHits(sstate1, sstate2));
+        // }
 
-        std::swap(sstate1, sstate2);
-        std::swap(sktstate1, sktstate2);
-        std::swap(cstates1, cstates2);
+        // std::swap(sstate1, sstate2);
+        // std::swap(sktstate1, sktstate2);
+        // std::swap(cstates1, cstates2);
 
-        if (m->isBlocked())
-        {
-            // in case PCM was blocked after spawning child application: break monitoring loop here
-            break;
-        }
+        // if (m->isBlocked())
+        // {
+        //     // in case PCM was blocked after spawning child application: break monitoring loop here
+        //     break;
+        // }
 
-        ++i;
+        // ++i;
     }
 
     exit(EXIT_SUCCESS);
