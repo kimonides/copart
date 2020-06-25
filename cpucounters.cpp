@@ -3469,6 +3469,39 @@ CoreCounterState getCoreCounterState(uint32 core)
     return result;
 }
 
+
+// My function to get all core counter states
+void PCM::getCoreCounterStates(std::vector<CoreCounterState> coreStates)
+{
+    PCM * inst = PCM::getInstance();
+    int num_cores = inst->getNumCores();
+    coreStates.clear();
+    coreStates.resize(num_cores);
+
+    std::vector<std::future<void> > asyncCoreResults;
+
+    if (inst)
+    {
+        for(uint32 core=0;core<num_cores;core++)
+        {
+            if (isCoreOnline(core))
+                {
+                    std::packaged_task<void()> task([this,&coreStates,core]() -> void
+                        {
+                            coreStates[core].readAndAggregate(MSR[core]);
+                        }
+                    );
+                    asyncCoreResults.push_back(std::move(task.get_future()));
+                    coreTaskQueues[core]->push(task);
+                }
+        }
+    }
+
+    for (auto & ar : asyncCoreResults)
+        ar.wait();
+
+}
+
 #ifdef PCM_USE_PERF
 void PCM::readPerfData(uint32 core, std::vector<uint64> & outData)
 {

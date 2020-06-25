@@ -1072,6 +1072,12 @@ public:
         \param coreStates core counter states (return parameter)
 
     */
+
+   /*
+        My function added to get only all core counter states
+   */
+   void PCM::getCoreCounterStates(std::vector<CoreCounterState> coreStates);
+
     void getAllCounterStates(SystemCounterState & systemState, std::vector<SocketCounterState> & socketStates, std::vector<CoreCounterState> & coreStates);
 
     /*! \brief Reads uncore counter states (including system and sockets) but no core counters

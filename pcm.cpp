@@ -1044,100 +1044,6 @@ void print_csv(PCM *m,
 }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define WAIT_TIME 10000
-void application_profiling_phase(PCM *m)
-{
-    cout << endl << endl << endl << endl << "Application Profiling Phase" << endl << endl << endl;
-    CoreCounterState cstates1, cstates2;
-    //TODO
-    //Must add running with mba also when I will change server
-    for (auto &&app : appList)
-    {
-        double IPCfull , IPC_low_ways , IPC_low_bw;
-        system("pqos -a \"llc:1=0;\" > nul");
-        while (true)
-        {   
-            string cmd = "pqos -a \"llc:1=" + to_string(app->cpu_core) + ";\"" ; 
-            cout << cmd << endl ;
-            cout << cmd.c_str() << endl ;
-            const char *command = ("pqos -a \"llc:1=" + to_string(app->cpu_core) + "\";").c_str();
-            cout << command << endl ;
-            exit(0);
-            cstates1 = m->getCoreCounterState(app->cpu_core);
-
-            //Give all ways and all memory bandwidth to the application
-            system("pqos -e \"llc:1=0xfffff;\" > nul");
-            system("pqos -e \"mba:1=100;\"");
-            MySleepMs(WAIT_TIME);
-
-            cstates2 = m->getCoreCounterState(app->cpu_core);
-            IPCfull = getIPC(cstates1, cstates2);
-            
-            cout << "IPC with full ways : " << IPCfull << endl;
-            if (m->isL3CacheHitRatioAvailable())
-                cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
-
-            std::swap(cstates1,cstates2);
-
-            //Give only 2 ways and all memory bandwidth
-            system("pqos -e \"llc:1=0x00003;\" > nul");
-            system("pqos -e \"mba:1=100;\" > nul");
-            MySleepMs(WAIT_TIME);
-
-            cstates2 = m->getCoreCounterState(app->cpu_core);
-            IPC_low_ways = getIPC(cstates1, cstates2);
-            
-            //cout << "IPC with 2 ways : " << IPC_low << endl;
-            if (m->isL3CacheHitRatioAvailable())
-                cout << "Hit Ratio : " << getL3CacheHitRatio(cstates1, cstates2) << endl;
-
-            std::swap(cstates1,cstates2);
-
-            //Give all ways and 20% memory bandwidth
-            system("pqos -e \"llc:1=0xfffff;\" > nul");
-            system("pqos -e \"mba:1=20;\" > nul");
-            MySleepMs(WAIT_TIME);
-
-            cstates2 = m->getCoreCounterState(app->cpu_core);
-            double IPC_low_bw = getIPC(cstates1,cstates2);
-
-
-            app->IPCfull = IPCfull;
-            //cout << "IPC fell by : " << (IPCfull-IPClow)/IPCfull << endl << endl << endl;
-            
-            
-            // if(  (IPCfull-IPC_low_ways)/IPCfull > 0.1 )
-            // {
-            //     cout << "LLC DEMAND STATE" << endl ;
-            //     app->state=consumer;
-            //     app->preference=LLC;
-            // }
-            // if(  (IPCfull-IPC_low_bw)/IPCfull > 0.1 )
-            // {
-            //     cout << "Bandwidth DEMAND STATE" << endl ;
-            //     app->state=consumer;
-            //     if(app->preference==LLC) 
-            //         app->preference = ANY;
-            //     else
-            //         app->preference=LLC;
-            // }
-
-        }
-    }
-}
-
-//Here I will start and map all the apps to cpu cores.
-//I must also create an app profiling phase.
-void initiate_copart_apps()
-{
-    system("docker start dc-server");
-    struct app *app = (struct app *)malloc(sizeof(struct app));
-    app->cpu_core = 0;
-    appList.insert(app);
-    cout << "Current app count: " << appList.size() << endl;
-}
-
 int main(int argc, char *argv[])
 {
     set_signal_handlers();
@@ -1479,16 +1385,7 @@ int main(int argc, char *argv[])
 
         if (copart_output)
         {
-            //cout << cstates1.size();
-            //cout << "Running Profiling Phase" << endl;
             application_profiling_phase(m);
-
-            // if (m->isL3CacheHitRatioAvailable())
-            //     cout << "Hit Ratio : " << unit_format(getL3CacheHitRatio(cstates1[0], cstates2[0])) << endl;
-            // cout << float_format(getL3CacheMisses(cstates1[0], cstates2[0])) << "  ";
-            // cout << unit_format(getL3CacheMisses(cstates1[0], cstates2[0])) << endl << endl;
-
-            //cout << unit_format(getL3CacheMisses(sstate1, sstate2));
         }
 
         // sanity checks
