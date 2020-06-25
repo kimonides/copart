@@ -304,7 +304,7 @@ void exploreSystemStateSpace(PCM *m)
     Profiles each application by running it with all the resources and with reduced LLC Ways and Memory Bandwidth respectively to see how sensitive it is to each resource. 
     It waits at each resource allocation for PROFILING_WAIT_TIME defined in copart.h.
 */
-void application_profiling_phase(PCM *m)
+void applicationProfilingPhase(PCM *m)
 {
     CoreCounterState cstates1, cstates2;
 

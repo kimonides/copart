@@ -1346,7 +1346,7 @@ int main(int argc, char *argv[])
     {
             if (copart_output)
             {
-                application_profiling_phase(m);
+                applicationProfilingPhase(m);
                 exploreSystemStateSpace(m);
                 idlePhase(m);
             }
