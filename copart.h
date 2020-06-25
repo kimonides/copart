@@ -232,9 +232,9 @@ void update_FSM(std::vector<struct app> appList, std::vector<CoreCounterState> c
     }
 }
 
-
-//TODO loop through each app and change it's CLOS MBA and Way Allocation if needed
-void set_system_state(vector<sturct app> appList)
+// TODO 
+// loop through each app and change it's CLOS MBA and Way Allocation if needed
+void setSystemState(vector<sturct app> appList)
 {
 }
 
@@ -251,6 +251,12 @@ void initiate_copart_apps()
     std::sort(appList.begin(), appList.end());
 }
 
+// TODO
+// create a function to get a neighbor state
+void getNeighborState(vector<struct app> appList)
+{
+
+}
 
 /*
     Explores system states until it converges by using the Hospitals/Residents solution
@@ -264,10 +270,11 @@ void exploreSystemStateSpace(PCM *m)
 
     while (true)
     {
-        set_system_state(appList);
+        setSystemState(appList);
         MySleepMs(PERIOD * 1000);
         m->getCoreCounterStates(cstates2);
-        update_FSM(appList, cstates1, cstates2); //get data and set app states
+
+        update_FSM(appList, cstates1, cstates2);
 
         vector<struct app> previousAppList;
         std::swap(previousAppList, appList);
@@ -278,7 +285,7 @@ void exploreSystemStateSpace(PCM *m)
         {
             if (retry_count < THETA)
             {
-                get_neighbor_state();
+                getNeighborState(appList);
                 retry_count++;
             }
             else
@@ -290,6 +297,8 @@ void exploreSystemStateSpace(PCM *m)
     }
 }
 
+// TODO
+// Make so the IPC that we get is the average of a few measurements
 #define PROFILING_WAIT_TIME 10000
 /*
     Profiles each application by running it with all the resources and with reduced LLC Ways and Memory Bandwidth respectively to see how sensitive it is to each resource. 
@@ -364,13 +373,14 @@ void idlePhase(PCM *m)
     std::vector<CoreCounterState> cstates1, cstates2;
     m->getCoreCounterStates(cstates1);
 
-    while(true)
+    while (true)
     {
         MySleepMs(PERIOD * 1000);
         m->getCoreCounterStates(cstates2);
 
-        //check if we must exit the idle phase
+        // TODO
+        // check if we must exit the idle phase
 
-        std::swap(cstates1,cstates2);
+        std::swap(cstates1, cstates2);
     }
 }
