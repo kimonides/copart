@@ -1420,9 +1420,6 @@ int main(int argc, char *argv[])
                 MySleepMs(500);
             }
 
-            docker rm
-
-
 
             // applicationProfilingPhase(m);
             // exploreSystemStateSpace(m);
