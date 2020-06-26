@@ -17,7 +17,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 /*!     \file pcm.cpp
 \brief Example of using CPU counters: implements a simple performance counter monitoring utility
 */
-#include "copart.h"
+//#include "copart.h"
 
 #define HACK_TO_REMOVE_DUPLICATE_ERROR
 #include <iostream>
