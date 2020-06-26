@@ -3471,7 +3471,7 @@ CoreCounterState getCoreCounterState(uint32 core)
 
 
 // My function to get all core counter states
-void PCM::getCoreCounterStates(std::vector<CoreCounterState> coreStates)
+void PCM::getCoreCounterStates(std::vector<CoreCounterState> &coreStates)
 {
     PCM * inst = PCM::getInstance();
     int num_cores = inst->getNumCores();

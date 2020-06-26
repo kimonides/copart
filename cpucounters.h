@@ -1076,7 +1076,7 @@ public:
    /*
         My function added to get only all core counter states
    */
-   void PCM::getCoreCounterStates(std::vector<CoreCounterState> coreStates);
+    void getCoreCounterStates(std::vector<CoreCounterState> &coreStates);
 
     void getAllCounterStates(SystemCounterState & systemState, std::vector<SocketCounterState> & socketStates, std::vector<CoreCounterState> & coreStates);
 
