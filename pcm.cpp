@@ -1061,6 +1061,7 @@ void printStuff(std::vector<CoreCounterState> cstates1 , std::vector<CoreCounter
     appMisses = getL3CacheMisses(cstates1[6],cstates2[6]);
     appAccesses = getL3CacheHits(cstates1[6],cstates2[6]) + appMisses;
     cout << "App 4 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
+    cout << endl << endl << endl << endl;
     return;
 }
 
