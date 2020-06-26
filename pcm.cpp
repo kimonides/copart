@@ -1044,6 +1044,26 @@ void print_csv(PCM *m,
 }
 
 
+void printStuff(std::vector<CoreCounterState> cstates1 , std::vector<CoreCounterState> cstates1)
+{
+    uint64 appMisses = getL3CacheMisses(cstates1[0],cstates2[0]);
+    uint64 appAccesses = getL3CacheHits(cstates1[0],cstates2[0]) + appMisses;
+    cout << "App 1 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+
+    appMisses = getL3CacheMisses(cstates1[2],cstates2[2]);
+    appAccesses = getL3CacheHits(cstates1[2],cstates2[2]) + appMisses;
+    cout << "App 2 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+
+    appMisses = getL3CacheMisses(cstates1[4],cstates2[4]);
+    appAccesses = getL3CacheHits(cstates1[4],cstates2[4]) + appMisses;
+    cout << "App 3 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+
+    appMisses = getL3CacheMisses(cstates1[6],cstates2[6]);
+    appAccesses = getL3CacheHits(cstates1[6],cstates2[6]) + appMisses;
+    cout << "App 4 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+    return;
+}
+
 int main(int argc, char *argv[])
 {
     set_signal_handlers();
@@ -1180,7 +1200,7 @@ int main(int argc, char *argv[])
             else if (strncmp(*argv, "--copart", 8) == 0 ||
                      strncmp(*argv, "/copart", 7) == 0)
             {
-                initiate_copart_apps();
+                // initiate_copart_apps();
                 cerr << "Copart activated" << endl;
                 copart_output = true;
                 continue;
@@ -1366,26 +1386,6 @@ int main(int argc, char *argv[])
 
     while (true)
     {
-        auto printStuff = [](std::vector<CoreCounterState> cstates1 , std::vector<CoreCounterState> cstates1)
-        {
-            uint64 appMisses = getL3CacheMisses(cstates1[0],cstates2[0]);
-            uint64 appAccesses = getL3CacheHits(cstates1[0],cstates2[0]) + appMisses;
-            cout << "App 1 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
-
-            appMisses = getL3CacheMisses(cstates1[2],cstates2[2]);
-            appAccesses = getL3CacheHits(cstates1[2],cstates2[2]) + appMisses;
-            cout << "App 2 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
-
-            appMisses = getL3CacheMisses(cstates1[4],cstates2[4]);
-            appAccesses = getL3CacheHits(cstates1[4],cstates2[4]) + appMisses;
-            cout << "App 3 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
-
-            appMisses = getL3CacheMisses(cstates1[6],cstates2[6]);
-            appAccesses = getL3CacheHits(cstates1[6],cstates2[6]) + appMisses;
-            cout << "App 4 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
-            return;
-        };
-
         MySleepMs(5000);
         m->getCoreCounterStates(cstates1);
         MySleepMs(500);
