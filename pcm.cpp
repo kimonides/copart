@@ -1408,10 +1408,10 @@ int main(int argc, char *argv[])
             }
             
             cout << endl << endl << endl << "---------------CHANGING STATE-------------" << endl << endl << endl;
-            system("pqos -e \"llc:1=0x00007;\" > nul");
-            system("pqos -e \"llc:1=0x00070;\" > nul");
-            system("pqos -e \"llc:1=0x00700;\" > nul");
+            system("pqos -e \"llc:1=0x70000;\" > nul");
             system("pqos -e \"llc:1=0x07000;\" > nul");
+            system("pqos -e \"llc:1=0x00700;\" > nul");
+            system("pqos -e \"llc:1=0x00070;\" > nul");
 
             m->getCoreCounterStates(cstates1);
             MySleepMs(500);
