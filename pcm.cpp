@@ -1342,14 +1342,92 @@ int main(int argc, char *argv[])
 
     //unsigned int i = 1;
 
+    //initiateCopartApps();
+
+    system("pqos -e \"llc:1=0x00003;\" > nul");
+    system("pqos -e \"llc:2=0x00030;\" > nul");
+    system("pqos -e \"llc:3=0x00300;\" > nul");
+    system("pqos -e \"llc:4=0x03000;\" > nul");
+
+    system("pqos -a \"llc:1=0;\"");
+    system("pqos -a \"llc:2=2;\"");
+    system("pqos -a \"llc:3=4;\"");
+    system("pqos -a \"llc:4=6;\"");
+
+    //system("docker run --name dc-server1 --net caching_network --rm --cpus=1 --cpuset-cpus=0  -d cloudsuite/data-caching:server -t 1 -m 4096 -n 1000 > nul" );
+    //system("docker run --name dc-server2 --net caching_network --rm --cpus=1 --cpuset-cpus=2  -d cloudsuite/data-caching:server -t 1 -m 4096 -n 1000 > nul" );
+    
+    
+    system("docker run --cpus=1 --cpuset-cpus=4 --rm --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g --num-executors 1 > nul");
+    system("docker run --cpus=1 --cpuset-cpus=6 --rm --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g --num-executors 4 > nul");
+
+
+    MySleepMs(500);
+
     while (true)
     {
-            if (copart_output)
+        auto printStuff = [](std::vector<CoreCounterState> cstates1 , std::vector<CoreCounterState> cstates1)
+        {
+            uint64 appMisses = getL3CacheMisses(cstates1[0],cstates2[0]);
+            uint64 appAccesses = getL3CacheHits(cstates1[0],cstates2[0]) + appMisses;
+            cout << "App 1 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+
+            appMisses = getL3CacheMisses(cstates1[2],cstates2[2]);
+            appAccesses = getL3CacheHits(cstates1[2],cstates2[2]) + appMisses;
+            cout << "App 2 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+
+            appMisses = getL3CacheMisses(cstates1[4],cstates2[4]);
+            appAccesses = getL3CacheHits(cstates1[4],cstates2[4]) + appMisses;
+            cout << "App 3 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+
+            appMisses = getL3CacheMisses(cstates1[6],cstates2[6]);
+            appAccesses = getL3CacheHits(cstates1[6],cstates2[6]) + appMisses;
+            cout << "App 4 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+            return;
+        };
+
+        MySleepMs(5000);
+        m->getCoreCounterStates(cstates1);
+        MySleepMs(500);
+
+
+        if (copart_output)
+        {
+            for(int i=0;i<5;i++)
             {
-                applicationProfilingPhase(m);
-                exploreSystemStateSpace(m);
-                idlePhase(m);
+                m->getCoreCounterStates(cstates2);
+                printStuff(cstates1,cstates2);
+                
+                std::swap(cstates1,cstates2);
+                MySleepMs(500);
             }
+            
+            cout << endl << endl << endl << "---------------CHANGING STATE-------------" << endl << endl << endl;
+            system("pqos -e \"llc:1=0x00007;\" > nul");
+            system("pqos -e \"llc:1=0x00070;\" > nul");
+            system("pqos -e \"llc:1=0x00700;\" > nul");
+            system("pqos -e \"llc:1=0x07000;\" > nul");
+
+            m->getCoreCounterStates(cstates1);
+            MySleepMs(500);
+
+            for(int i=0;i<10;i++)
+            {
+                m->getCoreCounterStates(cstates2);
+                printStuff(cstates1,cstates2);
+                
+                std::swap(cstates1,cstates2);
+                MySleepMs(500);
+            }
+
+            docker rm
+
+
+
+            // applicationProfilingPhase(m);
+            // exploreSystemStateSpace(m);
+            // idlePhase(m);
+        }
 
 
 //         if (!csv_output)

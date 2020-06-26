@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <iostream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +63,7 @@ struct app
 
 vector<struct app> appList;
 
-vector<struct app *> getConsumersList(vector<struct app> appList)
+vector<struct app *> getConsumersList(vector<struct app> &appList)
 {
     vector<struct app *> consumers;
     for (auto &&app : appList)
@@ -73,7 +74,7 @@ vector<struct app *> getConsumersList(vector<struct app> appList)
     return consumers;
 }
 
-vector<struct app *> getProducersList(vector<struct app> appList)
+vector<struct app *> getProducersList(vector<struct app> &appList)
 {
     vector<struct app *> producers;
     for (auto &&app : appList)
@@ -100,7 +101,7 @@ enum resource_type getResourceType(app *app)
         return MBA;
 }
 
-void getNextSystemState(vector<struct app> appList)
+void getNextSystemState(vector<struct app> &appList)
 {
     set<struct app *> producers = getProducersList(appList);
     set<struct app *> consumers = getConsumersList(appList);
@@ -223,7 +224,7 @@ void update_MBA_FSM(struct app *app, CoreCounterState cstate1, CoreCounterState 
     }
 }
 
-void update_FSM(std::vector<struct app> appList, std::vector<CoreCounterState> cstates1, std::vector<CoreCounterState> cstates2)
+void update_FSM(std::vector<struct app> &appList, std::vector<CoreCounterState> cstates1, std::vector<CoreCounterState> cstates2)
 {
     for (auto &&app : appList)
     {
@@ -234,18 +235,23 @@ void update_FSM(std::vector<struct app> appList, std::vector<CoreCounterState> c
 
 // TODO 
 // loop through each app and change it's CLOS MBA and Way Allocation if needed
-void setSystemState(vector<sturct app> appList)
+void setSystemState(vector<sturct app> &appList)
 {
 }
 
-void initiate_copart_apps()
+void initiateCopartApps()
 {
-    const int appCount = 1;
+    const int appCount = 2;
     appList.reserve(appCount);
 
-    system("docker start dc-server");
-    struct app app;
-    app.cpu_core = 0;
+    system("docker run --name dc-server --net caching_network --rm --cpus=1 --cpuset-cpus=0  -d cloudsuite/data-caching:server -t 1 -m 4096 -n 1000");
+    struct app app1;
+    app1.cpu_core = 0;
+    appList.push_back(app);
+
+    system("docker run --cpus=1 --cpuset-cpus=2 --rm --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g");
+    struct app app2;
+    app2.cpu_core = 0;
     appList.push_back(app);
 
     std::sort(appList.begin(), appList.end());
@@ -253,7 +259,7 @@ void initiate_copart_apps()
 
 // TODO
 // create a function to get a neighbor state
-void getNeighborState(vector<struct app> appList)
+void getNeighborState(vector<struct app> &appList)
 {
 
 }
@@ -297,6 +303,14 @@ void exploreSystemStateSpace(PCM *m)
     }
 }
 
+
+
+double getAverageIPC(CoreCounterState cstate1,CoreCounterState cstate2)
+{
+
+}
+
+
 // TODO
 // Make so the IPC that we get is the average of a few measurements
 #define PROFILING_WAIT_TIME 10000
@@ -306,7 +320,7 @@ void exploreSystemStateSpace(PCM *m)
 */
 void applicationProfilingPhase(PCM *m)
 {
-    CoreCounterState cstates1, cstates2;
+    CoreCounterState cstate1, cstate2;
 
     for (auto &&app : appList)
     {
@@ -318,7 +332,7 @@ void applicationProfilingPhase(PCM *m)
 
         system(cmd.c_str());
 
-        cstates1 = m->getCoreCounterState(app->cpu_core);
+        cstate1 = m->getCoreCounterState(app->cpu_core);
 
         //Give all ways and all memory bandwidth to the application
         cmd = "pqos -e \"llc:" + CLOS + "=0xfffff;\" > nul";
@@ -327,10 +341,10 @@ void applicationProfilingPhase(PCM *m)
         system(cmd.c_str());
         MySleepMs(PROFILING_WAIT_TIME);
 
-        cstates2 = m->getCoreCounterState(app->cpu_core);
+        cstate2 = m->getCoreCounterState(app->cpu_core);
         IPCfull = getIPC(cstates1, cstates2);
 
-        std::swap(cstates1, cstates2);
+        std::swap(cstate1, cstate2);
 
         //Give only 2 ways and all the memory bandwidth
         cmd = "pqos -e \"llc:" + CLOS + "=0x00003;\" > nul";
@@ -339,10 +353,10 @@ void applicationProfilingPhase(PCM *m)
         system(cmd.c_str());
         MySleepMs(PROFILING_WAIT_TIME);
 
-        cstates2 = m->getCoreCounterState(app->cpu_core);
-        IPC_low_ways = getIPC(cstates1, cstates2);
+        cstate2 = m->getCoreCounterState(app->cpu_core);
+        IPC_low_ways = getIPC(cstate1, cstate2);
 
-        std::swap(cstates1, cstates2);
+        std::swap(cstate1, cstate2);
 
         //Give all ways and 20% memory bandwidth
         cmd = "pqos -e \"llc:" + CLOS + "=0xfffff;\" > nul";
@@ -352,7 +366,7 @@ void applicationProfilingPhase(PCM *m)
         MySleepMs(PROFILING_WAIT_TIME);
 
         cstates2 = m->getCoreCounterState(app->cpu_core);
-        double IPC_low_bw = getIPC(cstates1, cstates2);
+        double IPC_low_bw = getIPC(cstate1, cstate2);
 
         app->IPCfull = IPCfull;
 
@@ -380,6 +394,9 @@ void idlePhase(PCM *m)
 
         // TODO
         // check if we must exit the idle phase
+        // e.g. unfairness falls by some threshold
+        cout << "Idle Phase exiting for now" << endl;
+        exit(EXIT_SUCCESS);
 
         std::swap(cstates1, cstates2);
     }
