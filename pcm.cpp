@@ -1048,19 +1048,19 @@ void printStuff(std::vector<CoreCounterState> cstates1 , std::vector<CoreCounter
 {
     uint64 appMisses = getL3CacheMisses(cstates1[0],cstates2[0]);
     uint64 appAccesses = getL3CacheHits(cstates1[0],cstates2[0]) + appMisses;
-    cout << "App 1 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+    cout << "App 1 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
 
     appMisses = getL3CacheMisses(cstates1[2],cstates2[2]);
     appAccesses = getL3CacheHits(cstates1[2],cstates2[2]) + appMisses;
-    cout << "App 2 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+    cout << "App 2 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
 
     appMisses = getL3CacheMisses(cstates1[4],cstates2[4]);
     appAccesses = getL3CacheHits(cstates1[4],cstates2[4]) + appMisses;
-    cout << "App 3 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+    cout << "App 3 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
 
     appMisses = getL3CacheMisses(cstates1[6],cstates2[6]);
     appAccesses = getL3CacheHits(cstates1[6],cstates2[6]) + appMisses;
-    cout << "App 4 => Misses : " << appMisses << "Accesses : " << appAccesses << endl;
+    cout << "App 4 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
     return;
 }
 
@@ -1364,15 +1364,15 @@ int main(int argc, char *argv[])
 
     //initiateCopartApps();
 
-    system("pqos -e \"llc:1=0x00003;\" > nul");
-    system("pqos -e \"llc:2=0x00030;\" > nul");
-    system("pqos -e \"llc:3=0x00300;\" > nul");
-    system("pqos -e \"llc:4=0x03000;\" > nul");
+    system("pqos -e \"llc:0=0x00003;\" > nul");
+    system("pqos -e \"llc:1=0x00030;\" > nul");
+    system("pqos -e \"llc:2=0x00300;\" > nul");
+    system("pqos -e \"llc:3=0x03000;\" > nul");
 
-    system("pqos -a \"llc:1=0;\"");
-    system("pqos -a \"llc:2=2;\"");
-    system("pqos -a \"llc:3=4;\"");
-    system("pqos -a \"llc:4=6;\"");
+    system("pqos -a \"llc:0=0;\"");
+    system("pqos -a \"llc:1=2;\"");
+    system("pqos -a \"llc:2=4;\"");
+    system("pqos -a \"llc:3=6;\"");
 
     //system("docker run --name dc-server1 --net caching_network --rm --cpus=1 --cpuset-cpus=0  -d cloudsuite/data-caching:server -t 1 -m 4096 -n 1000 > nul" );
     //system("docker run --name dc-server2 --net caching_network --rm --cpus=1 --cpuset-cpus=2  -d cloudsuite/data-caching:server -t 1 -m 4096 -n 1000 > nul" );
