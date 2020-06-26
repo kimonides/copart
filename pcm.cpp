@@ -1048,19 +1048,23 @@ void printStuff(std::vector<CoreCounterState> cstates1 , std::vector<CoreCounter
 {
     uint64 appMisses = getL3CacheMisses(cstates1[0],cstates2[0]);
     uint64 appAccesses = getL3CacheHits(cstates1[0],cstates2[0]) + appMisses;
-    cout << "App 1 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
+    double appHitRatio = getL3CacheHitRatio(cstates1[0],cstates2[0]);
+    cout << "App 1 => Misses : " << appMisses << "  Accesses : " << appAccesses << "    Hit Ratio : " << appHitRatio << endl;
 
     appMisses = getL3CacheMisses(cstates1[2],cstates2[2]);
     appAccesses = getL3CacheHits(cstates1[2],cstates2[2]) + appMisses;
-    cout << "App 2 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
+    appHitRatio = getL3CacheHitRatio(cstates1[2],cstates2[2]);
+    cout << "App 2 => Misses : " << appMisses << "  Accesses : " << appAccesses << "    Hit Ratio : " << appHitRatio << endl;
 
     appMisses = getL3CacheMisses(cstates1[4],cstates2[4]);
     appAccesses = getL3CacheHits(cstates1[4],cstates2[4]) + appMisses;
-    cout << "App 3 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
+    appHitRatio = getL3CacheHitRatio(cstates1[4],cstates2[4]);
+    cout << "App 3 => Misses : " << appMisses << "  Accesses : " << appAccesses << "    Hit Ratio : " << appHitRatio << endl;
 
     appMisses = getL3CacheMisses(cstates1[6],cstates2[6]);
     appAccesses = getL3CacheHits(cstates1[6],cstates2[6]) + appMisses;
-    cout << "App 4 => Misses : " << appMisses << "  Accesses : " << appAccesses << endl;
+    appHitRatio = getL3CacheHitRatio(cstates1[6],cstates2[6]);
+    cout << "App 4 => Misses : " << appMisses << "  Accesses : " << appAccesses << "    Hit Ratio : " << appHitRatio << endl;
     cout << endl << endl << endl << endl;
     return;
 }
