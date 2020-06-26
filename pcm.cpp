@@ -1378,8 +1378,8 @@ int main(int argc, char *argv[])
     //system("docker run --name dc-server2 --net caching_network --rm --cpus=1 --cpuset-cpus=2  -d cloudsuite/data-caching:server -t 1 -m 4096 -n 1000 > nul" );
     
     
-    system("docker run --cpus=1 --cpuset-cpus=4 --rm --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g --num-executors 1 > nul");
-    system("docker run --cpus=1 --cpuset-cpus=6 --rm --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g --num-executors 4 > nul");
+    system("docker run --cpus=1 --cpuset-cpus=4 --rm -d --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g --num-executors 1 > nul");
+    system("docker run --cpus=1 --cpuset-cpus=6 --rm -d --volumes-from data cloudsuite/in-memory-analytics /data/ml-latest /data/myratings.csv --driver-memory 2g --executor-memory 2g --num-executors 4 > nul");
 
 
     MySleepMs(500);
