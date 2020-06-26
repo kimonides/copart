@@ -1044,7 +1044,7 @@ void print_csv(PCM *m,
 }
 
 
-void printStuff(std::vector<CoreCounterState> cstates1 , std::vector<CoreCounterState> cstates1)
+void printStuff(std::vector<CoreCounterState> cstates1 , std::vector<CoreCounterState> cstates2)
 {
     uint64 appMisses = getL3CacheMisses(cstates1[0],cstates2[0]);
     uint64 appAccesses = getL3CacheHits(cstates1[0],cstates2[0]) + appMisses;
